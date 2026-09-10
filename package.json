@@ -1,0 +1,14 @@
+{
+  "name": "screen-time-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Screen Time Tracker marketing + PayPal/Razorpay checkout (Vercel)",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "razorpay": "^2.9.4"
+  }
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're Pro — Screen Time Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="success-box">
+    <p class="eyebrow">Payment received</p>
+    <h1>Welcome to Pro</h1>
+    <p class="lede" id="detail">Reopen the Chrome extension — Pro unlocks on your billing email.</p>
+    <a class="btn" href="/">Back home</a>
+  </div>
+  <script>
+    const p = new URLSearchParams(location.search);
+    const email = p.get('email') || '';
+    const cycle = p.get('cycle') || 'yearly';
+    const provider = p.get('provider') || '';
+    document.getElementById('detail').textContent =
+      `Plan: ${cycle}${provider ? ' via ' + provider : ''}${email ? ' · ' + email : ''}. Open Screen Time Tracker in Chrome to refresh Pro.`;
+  </script>
+</body>
+</html>

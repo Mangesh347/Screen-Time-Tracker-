@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Screen Time Tracker Pro</title>
+  <meta name="description" content="Upgrade to Screen Time Tracker Pro. Secure checkout from $4.99/mo." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="checkout.css" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+</head>
+<body class="ck-body">
+  <div class="ck-shell" id="checkoutShell">
+    <aside class="ck-left" aria-label="Order summary">
+      <a class="ck-back" href="/">Back to home</a>
+      <div class="ck-brand"><span class="ck-brand-mark">ST</span> Screen Time Tracker</div>
+      <p class="ck-kicker">Upgrade to Screen Time Tracker Pro</p>
+      <p class="ck-price-hero" id="heroPrice">$46.02 per year</p>
+
+      <div class="ck-test on ck-trust" id="testBanner">Upgrade to Pro — secure live checkout. Pro unlocks on your billing email.</div>
+
+      <div class="ck-currency" role="group" aria-label="Currency">
+        <button type="button" class="active" data-currency="USD" id="curUSD">USD</button>
+        <button type="button" data-currency="INR" id="curINR">INR</button>
+      </div>
+      <p class="ck-fx-note">Plans: $4.99 / $39 / $79 · INR ₹299 / ₹2,499 / ₹4,999. Tax shown below for USD.</p>
+
+      <div class="ck-plan-pills" role="tablist" aria-label="Billing cycle">
+        <button type="button" data-cycle="monthly">Monthly · $4.99</button>
+        <button type="button" class="active" data-cycle="yearly">Yearly · $39</button>
+        <button type="button" data-cycle="lifetime">Lifetime · $79</button>
+      </div>
+
+      <div class="ck-product">
+        <div class="ck-product-top">
+          <div class="ck-product-ico">ST</div>
+          <div style="flex:1">
+            <h2>Screen Time Tracker Pro</h2>
+            <p>Hard Lock, unlimited limits, 90-day history, schedules, sync &amp; deep cleaner. Bound to your email.</p>
+          </div>
+          <div class="ck-product-price" id="productPrice">$39.00</div>
+        </div>
+        <div class="ck-annual">
+          <span id="annualHint">Yearly saves versus paying monthly</span>
+          <label class="ck-switch" title="Toggle yearly">
+            <input type="checkbox" id="annualToggle" checked />
+            <span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="ck-breakdown">
+        <div class="ck-row"><span>Subtotal</span><strong id="rowSubtotal">$39.00</strong></div>
+        <div class="ck-row"><span id="taxLabel">GST (18%)</span><strong id="rowGst">$7.02</strong></div>
+        <div class="ck-row total"><span>Total due today</span><strong id="rowTotal">$46.02</strong></div>
+      </div>
+    </aside>
+
+    <main class="ck-right" aria-label="Payment">
+      <h1>Payment details</h1>
+
+      <div class="ck-express">
+        <button type="button" class="ck-btn ck-btn-paypal" id="payPaypal" aria-label="Pay with PayPal">
+          <img class="ck-brand-logo ck-brand-logo-pp" src="https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-100px.png" width="100" height="26" alt="PayPal" decoding="async" />
+        </button>
+        <button type="button" class="ck-btn ck-btn-rzp" id="payRazorpay" aria-label="Pay with Razorpay">
+          <strong style="font-size:15px;letter-spacing:.02em">Razorpay</strong>
+        </button>
+      </div>
+
+      <div class="ck-or">OR</div>
+
+      <label class="ck-label" for="buyerEmail">Contact information</label>
+      <input class="ck-input" id="buyerEmail" type="email" autocomplete="email" placeholder="Billing email for Pro activation" required />
+
+      <label class="ck-label">Card via Razorpay</label>
+      <div class="ck-card-box">
+        <strong>Secure card / UPI form</strong><br />Card details stay on Razorpay — never on our servers.
+      </div>
+
+      <button type="button" class="ck-btn ck-btn-dark" id="payCard">Subscribe with card</button>
+
+      <p class="ck-status" id="statusMsg" role="status"></p>
+
+      <p class="ck-legal">
+        By confirming, you authorize Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor) to charge this payment method for the selected plan.
+        Monthly/yearly Pro ends on the stated date unless renewed. Lifetime is one-time.
+        <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="refund.html">Refunds</a>
+      </p>
+      <div class="ck-powered">
+        <span>Secured by</span>
+        <img src="https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-100px.png" width="70" height="18" alt="PayPal" decoding="async" />
+        <span style="font-weight:700;font-size:13px">Razorpay</span>
+        <a href="support.html">Support</a>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const GST = 0.18;
+    const USD = { monthly: 4.99, yearly: 39, lifetime: 79 };
+    const INR = { monthly: 299, yearly: 2499, lifetime: 4999 };
+    let cycle = "yearly";
+    let currency = "USD";
+
+    const params = new URLSearchParams(location.search);
+    if (["monthly", "yearly", "lifetime"].includes(params.get("cycle"))) cycle = params.get("cycle");
+    if ((params.get("email") || "").includes("@")) document.getElementById("buyerEmail").value = params.get("email");
+    if (params.get("provider") === "razorpay") currency = "INR";
+
+    function money(n, cur) {
+      return new Intl.NumberFormat(cur === "INR" ? "en-IN" : "en-US", {
+        style: "currency", currency: cur, maximumFractionDigits: 2
+      }).format(n);
+    }
+
+    function quote() {
+      if (currency === "INR") {
+        const total = INR[cycle];
+        const subtotal = Math.round((total / (1 + GST)) * 100) / 100;
+        const gst = Math.round((total - subtotal) * 100) / 100;
+        return { subtotal, gst, total, period: label(), taxIncluded: true };
+      }
+      const sub = USD[cycle];
+      const gst = Math.round(sub * GST * 100) / 100;
+      return { subtotal: sub, gst, total: Math.round((sub + gst) * 100) / 100, period: label(), taxIncluded: false };
+    }
+
+    function label() {
+      return cycle === "monthly" ? "per month" : cycle === "yearly" ? "per year" : "one-time";
+    }
+
+    function render() {
+      const q = quote();
+      document.getElementById("heroPrice").textContent = `${money(q.total, currency)} ${q.period}`;
+      document.getElementById("productPrice").textContent = money(q.subtotal, currency);
+      document.getElementById("rowSubtotal").textContent = money(q.subtotal, currency);
+      document.getElementById("rowGst").textContent = q.taxIncluded ? "Included" : money(q.gst, currency);
+      document.getElementById("taxLabel").textContent = q.taxIncluded ? "Taxes" : "GST (18%)";
+      document.getElementById("rowTotal").textContent = money(q.total, currency);
+      document.getElementById("annualToggle").checked = cycle === "yearly";
+      document.querySelectorAll("[data-cycle]").forEach((b) => b.classList.toggle("active", b.dataset.cycle === cycle));
+      document.getElementById("curUSD").classList.toggle("active", currency === "USD");
+      document.getElementById("curINR").classList.toggle("active", currency === "INR");
+      document.getElementById("annualHint").textContent =
+        cycle === "yearly" ? "Best value — save versus paying monthly" :
+        cycle === "lifetime" ? "Pay once · keep Pro on this email" :
+        "Billed monthly · renew before expiry to continue";
+    }
+
+    function setStatus(msg, kind) {
+      const el = document.getElementById("statusMsg");
+      el.textContent = msg || "";
+      el.className = "ck-status" + (kind ? " " + kind : "");
+    }
+
+    function requireEmail() {
+      const e = (document.getElementById("buyerEmail").value || "").trim().toLowerCase();
+      if (!e || !e.includes("@")) {
+        setStatus("Enter the billing email that will receive Pro.", "error");
+        document.getElementById("buyerEmail").focus();
+        return null;
+      }
+      return e;
+    }
+
+    function showSuccess(data) {
+      const email = (data.email || "").trim().toLowerCase();
+      const expiresLine = data.expiresAt
+        ? `Pro active until <strong>${new Date(data.expiresAt).toLocaleDateString()}</strong>`
+        : `Lifetime Pro on this email`;
+      document.getElementById("checkoutShell").innerHTML = `
+        <div class="ck-right ck-success-wrap">
+          <div class="ck-success">
+            <div class="ck-success-check" aria-hidden="true">✓</div>
+            <p class="ck-success-kicker">Payment verified</p>
+            <h1>Open the extension — Pro unlocks after sign-in</h1>
+            <p class="ck-success-lead">
+              Sign in to Screen Time Tracker with <strong>${email || "your billing Gmail"}</strong>.
+              Pro unlocks for that account — no license key to paste.
+            </p>
+            <p class="ck-success-meta">${expiresLine}</p>
+            <a class="ck-btn ck-btn-dark ck-success-cta" href="/">Back to home</a>
+            <p class="ck-success-home"><a href="/support.html">Need help?</a></p>
+          </div>
+        </div>`;
+    }
+
+    async function payPaypal() {
+      const e = requireEmail();
+      if (!e) return;
+      currency = "USD";
+      render();
+      setStatus("Creating PayPal order…");
+      try {
+        const res = await fetch("/api/paypal/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cycle, email: e })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Order failed");
+        if (data.approve_url) {
+          sessionStorage.setItem("stt_pp_order", JSON.stringify({ order_id: data.order_id, email: e, cycle }));
+          location.href = data.approve_url;
+          return;
+        }
+        const cap = await fetch("/api/paypal/capture-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order_id: data.order_id, email: e, cycle })
+        });
+        const result = await cap.json();
+        if (!cap.ok) throw new Error(result.error || "Capture failed");
+        showSuccess(result);
+      } catch (err) {
+        setStatus(err.message, "error");
+      }
+    }
+
+    async function payRazorpay() {
+      const e = requireEmail();
+      if (!e) return;
+      currency = "INR";
+      render();
+      setStatus("Opening Razorpay…");
+      try {
+        const res = await fetch("/api/razorpay/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cycle, email: e })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || "Order failed");
+
+        if (data.mode === "simulated_preview" || String(data.order_id).startsWith("order_sim_")) {
+          const verify = await fetch("/api/razorpay/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: data.order_id,
+              razorpay_payment_id: "pay_sim_" + Date.now(),
+              razorpay_signature: "sim",
+              email: e,
+              cycle
+            })
+          });
+          const v = await verify.json();
+          if (!verify.ok || !v.success) throw new Error(v.error || "Verify failed");
+          showSuccess(v);
+          return;
+        }
+
+        if (typeof Razorpay === "undefined") throw new Error("Razorpay script not loaded");
+        const rzp = new Razorpay({
+          key: data.key_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: "Screen Time Tracker Pro",
+          description: data.quote?.desc || "Pro",
+          order_id: data.order_id,
+          prefill: { email: e },
+          handler: async function (response) {
+            const verify = await fetch("/api/razorpay/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...response, email: e, cycle })
+            });
+            const v = await verify.json();
+            if (!verify.ok || !v.success) {
+              setStatus(v.error || "Payment verify failed", "error");
+              return;
+            }
+            showSuccess(v);
+          }
+        });
+        rzp.open();
+        setStatus("");
+      } catch (err) {
+        setStatus(err.message, "error");
+      }
+    }
+
+    document.querySelectorAll("[data-cycle]").forEach((b) => {
+      b.addEventListener("click", () => { cycle = b.dataset.cycle; render(); });
+    });
+    document.getElementById("curUSD").onclick = () => { currency = "USD"; render(); };
+    document.getElementById("curINR").onclick = () => { currency = "INR"; render(); };
+    document.getElementById("annualToggle").onchange = (e) => {
+      cycle = e.target.checked ? "yearly" : "monthly";
+      render();
+    };
+    document.getElementById("payPaypal").onclick = payPaypal;
+    document.getElementById("payRazorpay").onclick = payRazorpay;
+    document.getElementById("payCard").onclick = payRazorpay;
+
+    async function maybeCapturePaypal() {
+      if (params.get("paid") !== "paypal" && !params.get("token")) return;
+      const stored = (() => { try { return JSON.parse(sessionStorage.getItem("stt_pp_order") || "{}"); } catch { return {}; } })();
+      const orderId = params.get("token") || params.get("order_id") || stored.order_id;
+      const email = params.get("email") || stored.email || document.getElementById("buyerEmail").value;
+      const cyc = params.get("cycle") || stored.cycle || cycle;
+      if (!orderId) return;
+      setStatus("Confirming PayPal payment…");
+      try {
+        const res = await fetch("/api/paypal/capture-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order_id: orderId, email, cycle: cyc })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || "Capture failed");
+        showSuccess(data);
+      } catch (err) {
+        setStatus(err.message, "error");
+      }
+    }
+
+    render();
+    maybeCapturePaypal();
+  </script>
+</body>
+</html>
