@@ -6,15 +6,7 @@
     { "source": "/support", "destination": "/support.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/refund", "destination": "/refund.html" },
-    { "source": "/api/stt/access", "destination": "/api/stt/access.js" },
-    { "source": "/api/stt/leaderboard", "destination": "/api/stt/leaderboard.js" },
-    { "source": "/api/stt/sync-profile", "destination": "/api/stt/sync-profile.js" },
-    { "source": "/api/stt/guest-score", "destination": "/api/stt/guest-score.js" },
-    { "source": "/api/paypal/create-order", "destination": "/api/paypal/create-order.js" },
-    { "source": "/api/paypal/capture-order", "destination": "/api/paypal/capture-order.js" },
-    { "source": "/api/razorpay/create-order", "destination": "/api/razorpay/create-order.js" },
-    { "source": "/api/razorpay/verify-payment", "destination": "/api/razorpay/verify-payment.js" }
+    { "source": "/refund", "destination": "/refund.html" }
   ],
   "headers": [
     {
