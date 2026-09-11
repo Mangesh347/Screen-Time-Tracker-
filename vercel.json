@@ -1,4 +1,4 @@
-﻿{
+{
   "rewrites": [
     { "source": "/checkout", "destination": "/checkout.html" },
     { "source": "/pricing", "destination": "/checkout.html" },
