@@ -12,6 +12,7 @@
     <p class="eyebrow">Payment received</p>
     <h1>Welcome to Pro</h1>
     <p class="lede" id="detail">Reopen the Chrome extension — Pro unlocks on your billing email.</p>
+    <p class="lede" id="hint" style="font-size:14px;opacity:.8;margin-top:8px">Keep this tab open a moment — Screen Time Tracker verifies your plan automatically.</p>
     <a class="btn" href="/">Back home</a>
   </div>
   <script>
@@ -20,7 +21,13 @@
     const cycle = p.get('cycle') || 'yearly';
     const provider = p.get('provider') || '';
     document.getElementById('detail').textContent =
-      `Plan: ${cycle}${provider ? ' via ' + provider : ''}${email ? ' · ' + email : ''}. Open Screen Time Tracker in Chrome to refresh Pro.`;
+      `Plan: ${cycle}${provider ? ' via ' + provider : ''}${email ? ' · ' + email : ''}. Open Screen Time Tracker in Chrome — Pro should unlock within seconds.`;
+    // Extension background watches this URL and calls /api/stt/access
+    try {
+      localStorage.setItem('stt_checkout_success', JSON.stringify({
+        email, cycle, provider, at: Date.now(),
+      }));
+    } catch {}
   </script>
 </body>
 </html>
