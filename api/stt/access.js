@@ -1,10 +1,16 @@
 /**
- * GET /api/stt/access?email=
- * Used by the Chrome extension to refresh Pro entitlement.
- * Also accepts Authorization: Bearer <supabase access token>
+ * GET /api/stt/access
+ * Prefer Authorization Bearer → user_id entitlement.
+ * Returns { plan, is_pro, expires_at, provider } (+ legacy pro/expiresAt aliases).
  */
-import { findEntitlementByEmail, normalizeEmail } from "../_lib/entitlement.js";
-import { supabaseConfig } from "../_lib/supabase.js";
+import {
+  findEntitlementByEmail,
+  findEntitlementByUserId,
+  normalizeEmail,
+  computeIsPro,
+  demoteEntitlement,
+} from "../_lib/entitlement.js";
+import { userFromAuthHeader } from "../_lib/auth.js";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,15 +18,17 @@ function cors(res) {
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
 }
 
-async function emailFromToken(token) {
-  const { url, key } = supabaseConfig();
-  if (!url || !key || !token) return null;
-  const res = await fetch(`${url}/auth/v1/user`, {
-    headers: { apikey: key, Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return null;
-  const user = await res.json();
-  return normalizeEmail(user.email);
+function freePayload(extra = {}) {
+  return {
+    plan: "free",
+    is_pro: false,
+    pro: false,
+    expires_at: null,
+    expiresAt: null,
+    provider: null,
+    providers: ["paypal", "razorpay"],
+    ...extra,
+  };
 }
 
 export default async function handler(req, res) {
@@ -29,35 +37,50 @@ export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    let email = normalizeEmail(req.query?.email || "");
-    const auth = req.headers.authorization || "";
-    if (auth.startsWith("Bearer ")) {
-      const fromTok = await emailFromToken(auth.slice(7).trim());
-      if (fromTok) email = fromTok;
+    const authUser = await userFromAuthHeader(req);
+    let row = null;
+
+    if (authUser?.id) {
+      row = await findEntitlementByUserId(authUser.id);
+      // If row exists but expired, demote
+      if (!row) {
+        // Check raw expired row to demote
+        const { sbFetch } = await import("../_lib/supabase.js");
+        const raw = await sbFetch(
+          `/rest/v1/stt_entitlements?user_id=eq.${encodeURIComponent(authUser.id)}&select=*&limit=1`,
+        );
+        const r = raw.data?.[0];
+        if (
+          r &&
+          ["active", "paid"].includes(String(r.status || "").toLowerCase()) &&
+          r.plan !== "lifetime" &&
+          r.expires_at &&
+          new Date(r.expires_at).getTime() <= Date.now()
+        ) {
+          await demoteEntitlement({ userId: authUser.id, email: authUser.email, reason: "expired" });
+        }
+      }
+    } else {
+      // Legacy email query — read-only; does not prove ownership for upgrades
+      const email = normalizeEmail(req.query?.email || "");
+      if (email) row = await findEntitlementByEmail(email);
     }
 
-    if (!email) {
-      return res.status(200).json({ plan: "free", pro: false, providers: ["paypal", "razorpay"] });
-    }
-
-    const row = await findEntitlementByEmail(email);
-    if (!row) {
-      return res.status(200).json({
-        plan: "free",
-        pro: false,
-        email,
-        providers: ["paypal", "razorpay"],
-      });
+    if (!row || !computeIsPro(row)) {
+      return res.status(200).json(freePayload({ email: authUser?.email || normalizeEmail(req.query?.email || "") || undefined }));
     }
 
     const plan = row.plan || row.cycle || "yearly";
     return res.status(200).json({
       plan,
       cycle: row.cycle || plan,
+      is_pro: true,
       pro: true,
       provider: row.provider || null,
+      expires_at: row.expires_at || null,
       expiresAt: row.expires_at || null,
-      email,
+      email: row.email || authUser?.email || null,
+      user_id: row.user_id || authUser?.id || null,
       status: row.status || "active",
       providers: ["paypal", "razorpay"],
     });

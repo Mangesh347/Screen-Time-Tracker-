@@ -11,21 +11,42 @@
   <div class="success-box">
     <p class="eyebrow">Payment received</p>
     <h1>Welcome to Pro</h1>
-    <p class="lede" id="detail">Reopen the Chrome extension — Pro unlocks on your billing email.</p>
-    <p class="lede" id="hint" style="font-size:14px;opacity:.8;margin-top:8px">Keep this tab open a moment — Screen Time Tracker verifies your plan automatically.</p>
-    <a class="btn" href="/">Back home</a>
+    <p class="lede" id="detail">Opening Screen Time Tracker…</p>
+    <p class="lede" id="hint" style="font-size:14px;opacity:.8;margin-top:8px">If the extension doesn’t open, click the button below.</p>
+    <a class="btn" id="openExt" href="/">Open dashboard</a>
   </div>
   <script>
     const p = new URLSearchParams(location.search);
     const email = p.get('email') || '';
     const cycle = p.get('cycle') || 'yearly';
     const provider = p.get('provider') || '';
+    const extId = (p.get('ext_id') || '').replace(/[^a-z0-9]/gi, '');
+    const dashUrl = extId
+      ? ('chrome-extension://' + extId + '/pages/dashboard.html#pro')
+      : '';
+
     document.getElementById('detail').textContent =
-      `Plan: ${cycle}${provider ? ' via ' + provider : ''}${email ? ' · ' + email : ''}. Open Screen Time Tracker in Chrome — Pro should unlock within seconds.`;
-    // Extension background watches this URL and calls /api/stt/access
+      `Plan: ${cycle}${provider ? ' via ' + provider : ''}${email ? ' · ' + email : ''}.` +
+      (dashUrl ? ' Redirecting to your extension dashboard…' : ' Reopen Screen Time Tracker in Chrome — Pro unlocks on this email.');
+
+    const btn = document.getElementById('openExt');
+    if (dashUrl) {
+      btn.href = dashUrl;
+      btn.textContent = 'Open Pro dashboard';
+      // Auto-redirect (pages/* are web_accessible)
+      setTimeout(function () {
+        try { location.href = dashUrl; } catch (e) {}
+      }, 600);
+    } else {
+      btn.href = '/';
+      btn.textContent = 'Back home — thank you';
+      document.getElementById('hint').textContent =
+        'No extension id on this link — open Screen Time Tracker manually. Pro is bound to your billing email.';
+    }
+
     try {
       localStorage.setItem('stt_checkout_success', JSON.stringify({
-        email, cycle, provider, at: Date.now(),
+        email, cycle, provider, ext_id: extId, at: Date.now(),
       }));
     } catch {}
   </script>

@@ -106,9 +106,45 @@
     let currency = "USD";
 
     const params = new URLSearchParams(location.search);
-    if (["monthly", "yearly", "lifetime"].includes(params.get("cycle"))) cycle = params.get("cycle");
-    if ((params.get("email") || "").includes("@")) document.getElementById("buyerEmail").value = params.get("email");
-    if (params.get("provider") === "razorpay") currency = "INR";
+    const checkoutCtx = {
+      email: (params.get("email") || "").trim().toLowerCase(),
+      access_token: params.get("access_token") || "",
+      user_id: params.get("user_id") || "",
+      ext_id: (params.get("ext_id") || "").replace(/[^a-z0-9]/gi, ""),
+      cycle: params.get("cycle") || "yearly",
+      provider: params.get("provider") || "",
+      paid: params.get("paid") || "",
+      token: params.get("token") || "",
+      PayerID: params.get("PayerID") || "",
+    };
+
+    if (["monthly", "yearly", "lifetime"].includes(checkoutCtx.cycle)) cycle = checkoutCtx.cycle;
+    if (checkoutCtx.email.includes("@")) document.getElementById("buyerEmail").value = checkoutCtx.email;
+    if (checkoutCtx.provider === "razorpay") currency = "INR";
+    if (params.get("cancel") === "1") {
+      setTimeout(() => setStatus("Payment cancelled. You’re still on Free — try again when ready.", "error"), 0);
+    }
+
+    function authHeaders() {
+      const h = { "Content-Type": "application/json" };
+      if (checkoutCtx.access_token) h.Authorization = "Bearer " + checkoutCtx.access_token;
+      return h;
+    }
+
+    function authBody(extra) {
+      return {
+        user_id: checkoutCtx.user_id || undefined,
+        access_token: checkoutCtx.access_token || undefined,
+        email: (extra && extra.email) || checkoutCtx.email || undefined,
+        cycle: (extra && extra.cycle) || cycle,
+        ext_id: checkoutCtx.ext_id || undefined,
+        ...extra,
+      };
+    }
+
+    function apiError(data, fallback) {
+      return (data && (data.message || data.error)) || fallback || "Request failed";
+    }
 
     function money(n, cur) {
       return new Intl.NumberFormat(cur === "INR" ? "en-IN" : "en-US", {
@@ -163,58 +199,54 @@
         document.getElementById("buyerEmail").focus();
         return null;
       }
+      checkoutCtx.email = e;
       return e;
     }
 
-    function showSuccess(data) {
-      const email = (data.email || "").trim().toLowerCase();
-      const expiresLine = data.expiresAt
-        ? `Pro active until <strong>${new Date(data.expiresAt).toLocaleDateString()}</strong>`
-        : `Lifetime Pro on this email`;
-      document.getElementById("checkoutShell").innerHTML = `
-        <div class="ck-right ck-success-wrap">
-          <div class="ck-success">
-            <div class="ck-success-check" aria-hidden="true">✓</div>
-            <p class="ck-success-kicker">Payment verified</p>
-            <h1>Open the extension — Pro unlocks after sign-in</h1>
-            <p class="ck-success-lead">
-              Sign in to Screen Time Tracker with <strong>${email || "your billing Gmail"}</strong>.
-              Pro unlocks for that account — no license key to paste.
-            </p>
-            <p class="ck-success-meta">${expiresLine}</p>
-            <a class="ck-btn ck-btn-dark ck-success-cta" href="/">Back to home</a>
-            <p class="ck-success-home"><a href="/support.html">Need help?</a></p>
-          </div>
-        </div>`;
+    function goSuccess(data) {
+      const email = (data.email || checkoutCtx.email || "").trim().toLowerCase();
+      const qs = new URLSearchParams({
+        email,
+        cycle: data.cycle || cycle,
+        provider: data.provider || "",
+        is_pro: data.is_pro === false ? "0" : "1",
+      });
+      if (checkoutCtx.ext_id) qs.set("ext_id", checkoutCtx.ext_id);
+      if (checkoutCtx.user_id) qs.set("user_id", checkoutCtx.user_id);
+      location.href = "/success.html?" + qs.toString();
     }
 
     async function payPaypal() {
       const e = requireEmail();
       if (!e) return;
+      if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
+        setStatus("Open checkout from the extension while signed in (token missing).", "error");
+        return;
+      }
       currency = "USD";
       render();
-      setStatus("Creating PayPal order…");
+      setStatus("Creating PayPal sandbox order…");
       try {
         const res = await fetch("/api/paypal/create-order", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cycle, email: e })
+          headers: authHeaders(),
+          body: JSON.stringify(authBody({ cycle, email: e })),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Order failed");
-        if (data.approve_url) {
-          sessionStorage.setItem("stt_pp_order", JSON.stringify({ order_id: data.order_id, email: e, cycle }));
-          location.href = data.approve_url;
-          return;
-        }
-        const cap = await fetch("/api/paypal/capture-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_id: data.order_id, email: e, cycle })
-        });
-        const result = await cap.json();
-        if (!cap.ok) throw new Error(result.error || "Capture failed");
-        showSuccess(result);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(apiError(data, "PayPal order failed"));
+        if (!data.approve_url) throw new Error("No PayPal approve URL — check sandbox keys on the server.");
+        sessionStorage.setItem(
+          "stt_pp_order",
+          JSON.stringify({
+            order_id: data.order_id,
+            email: e,
+            cycle,
+            access_token: checkoutCtx.access_token,
+            user_id: checkoutCtx.user_id,
+            ext_id: checkoutCtx.ext_id,
+          }),
+        );
+        location.href = data.approve_url;
       } catch (err) {
         setStatus(err.message, "error");
       }
@@ -223,37 +255,26 @@
     async function payRazorpay() {
       const e = requireEmail();
       if (!e) return;
+      if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
+        setStatus("Open checkout from the extension while signed in (token missing).", "error");
+        return;
+      }
       currency = "INR";
       render();
-      setStatus("Opening Razorpay…");
+      setStatus("Opening Razorpay test checkout…");
       try {
         const res = await fetch("/api/razorpay/create-order", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cycle, email: e })
+          headers: authHeaders(),
+          body: JSON.stringify(authBody({ cycle, email: e })),
         });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || "Order failed");
-
-        if (data.mode === "simulated_preview" || String(data.order_id).startsWith("order_sim_")) {
-          const verify = await fetch("/api/razorpay/verify-payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: data.order_id,
-              razorpay_payment_id: "pay_sim_" + Date.now(),
-              razorpay_signature: "sim",
-              email: e,
-              cycle
-            })
-          });
-          const v = await verify.json();
-          if (!verify.ok || !v.success) throw new Error(v.error || "Verify failed");
-          showSuccess(v);
-          return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(apiError(data, "Razorpay order failed"));
+        if (!data.key_id || !data.order_id) {
+          throw new Error("Razorpay keys/order missing on server. Add rzp_test_* env vars.");
         }
+        if (typeof Razorpay === "undefined") throw new Error("Razorpay Checkout.js not loaded");
 
-        if (typeof Razorpay === "undefined") throw new Error("Razorpay script not loaded");
         const rzp = new Razorpay({
           key: data.key_id,
           amount: data.amount,
@@ -263,18 +284,34 @@
           order_id: data.order_id,
           prefill: { email: e },
           handler: async function (response) {
-            const verify = await fetch("/api/razorpay/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...response, email: e, cycle })
-            });
-            const v = await verify.json();
-            if (!verify.ok || !v.success) {
-              setStatus(v.error || "Payment verify failed", "error");
-              return;
+            setStatus("Verifying payment…");
+            try {
+              const verify = await fetch("/api/razorpay/verify-payment", {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify(authBody({ ...response, email: e, cycle })),
+              });
+              const v = await verify.json().catch(() => ({}));
+              if (!verify.ok || !v.success || v.is_pro !== true) {
+                setStatus(apiError(v, "Payment verify failed — you remain on Free."), "error");
+                return;
+              }
+              goSuccess(v);
+            } catch (err) {
+              setStatus(err.message || "Verify failed — you remain on Free.", "error");
             }
-            showSuccess(v);
-          }
+          },
+          modal: {
+            ondismiss: function () {
+              setStatus("Checkout closed. You’re still on Free.", "error");
+            },
+          },
+        });
+        rzp.on("payment.failed", function (resp) {
+          const msg =
+            (resp && resp.error && (resp.error.description || resp.error.reason)) ||
+            "Payment failed — you remain on Free.";
+          setStatus(msg, "error");
         });
         rzp.open();
         setStatus("");
@@ -297,22 +334,34 @@
     document.getElementById("payCard").onclick = payRazorpay;
 
     async function maybeCapturePaypal() {
-      if (params.get("paid") !== "paypal" && !params.get("token")) return;
-      const stored = (() => { try { return JSON.parse(sessionStorage.getItem("stt_pp_order") || "{}"); } catch { return {}; } })();
-      const orderId = params.get("token") || params.get("order_id") || stored.order_id;
-      const email = params.get("email") || stored.email || document.getElementById("buyerEmail").value;
-      const cyc = params.get("cycle") || stored.cycle || cycle;
-      if (!orderId) return;
+      const returning = checkoutCtx.paid === "paypal" || !!checkoutCtx.token;
+      if (!returning) return;
+      const stored = (() => {
+        try { return JSON.parse(sessionStorage.getItem("stt_pp_order") || "{}"); } catch { return {}; }
+      })();
+      if (stored.access_token && !checkoutCtx.access_token) checkoutCtx.access_token = stored.access_token;
+      if (stored.user_id && !checkoutCtx.user_id) checkoutCtx.user_id = stored.user_id;
+      if (stored.ext_id && !checkoutCtx.ext_id) checkoutCtx.ext_id = stored.ext_id;
+
+      const orderId = checkoutCtx.token || params.get("order_id") || stored.order_id;
+      const email = checkoutCtx.email || stored.email || document.getElementById("buyerEmail").value;
+      const cyc = checkoutCtx.cycle || stored.cycle || cycle;
+      if (!orderId) {
+        setStatus("Missing PayPal order token — payment not captured. You’re still Free.", "error");
+        return;
+      }
       setStatus("Confirming PayPal payment…");
       try {
         const res = await fetch("/api/paypal/capture-order", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_id: orderId, email, cycle: cyc })
+          headers: authHeaders(),
+          body: JSON.stringify(authBody({ order_id: orderId, email, cycle: cyc })),
         });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || "Capture failed");
-        showSuccess(data);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success || data.is_pro !== true) {
+          throw new Error(apiError(data, "Capture failed — you remain on Free."));
+        }
+        goSuccess(data);
       } catch (err) {
         setStatus(err.message, "error");
       }

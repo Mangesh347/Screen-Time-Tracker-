@@ -69,11 +69,15 @@ Copy from `.env.example`:
 | `SUPABASE_URL` | `https://mproxhlssrniwlcywfhq.supabase.co` |
 | `SUPABASE_ANON_KEY` | Project Settings → API → anon |
 | `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → service_role (**secret**) |
-| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | PayPal Developer |
-| `PAYPAL_MODE` | `sandbox` then `live` |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Razorpay Dashboard |
+| `MODE` | `sandbox` (default) or `live` |
+| `PAYPAL_TEST_CLIENT_ID` / `PAYPAL_TEST_CLIENT_SECRET` | PayPal Developer → Sandbox app |
+| `PAYPAL_LIVE_CLIENT_ID` / `PAYPAL_LIVE_CLIENT_SECRET` | Live app (only when MODE=live) |
+| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | Fallback aliases if TEST_/LIVE_ not set |
+| `RAZORPAY_TEST_KEY_ID` / `RAZORPAY_TEST_KEY_SECRET` | Razorpay Dashboard → Test (`rzp_test_*`) |
+| `RAZORPAY_LIVE_KEY_ID` / `RAZORPAY_LIVE_KEY_SECRET` | Live keys only when MODE=live |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Fallback aliases |
 
-Redeploy after saving env vars.
+Missing payment keys return **503** (no simulated Pro). Redeploy after saving env vars.
 
 ## 5) Point the extension at your site
 
