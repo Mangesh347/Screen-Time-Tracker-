@@ -65,12 +65,18 @@ button, input, select { font: inherit; }
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: var(--white);
-  color: var(--ink);
+  background: #0a0a0a;
+  color: #fff;
   display: grid;
   place-items: center;
   font-size: 13px;
   font-weight: 800;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+img.brand-mark {
+  padding: 0;
+  border: 0;
 }
 
 .nav {
