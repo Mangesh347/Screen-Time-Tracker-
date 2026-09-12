@@ -379,34 +379,59 @@ export default async function handler(req, res) {
       byId.set(row.id, row);
     }
 
-    // Auth directory: enrich names only — do NOT invent zero usage shells that look like real members
+    // Auth directory: every signed-up user belongs on the board.
+    // Use real synced usage when present; honest zeros when they have not browsed yet.
+    // Never invent demo/fake accounts — only real Auth users.
     const authUsers = await listAuthUsers(limit);
     const stillEmpty = [];
     for (const au of authUsers) {
       if (!au?.id) continue;
+      const displayName =
+        au.user_metadata?.full_name ||
+        au.user_metadata?.name ||
+        (au.email ? au.email.split('@')[0] : 'Member');
       const existing = byId.get(au.id);
       if (existing) {
         byId.set(au.id, {
           ...existing,
           email: existing.email || au.email,
-          name: existing.name || au.user_metadata?.full_name || au.user_metadata?.name || (au.email ? au.email.split('@')[0] : 'Member'),
+          name: existing.name || displayName,
           picture: existing.picture || au.user_metadata?.avatar_url || null,
         });
         if (needsUsageRebuild(existing)) stillEmpty.push(au.id);
       } else if (usageRollups.has(au.id)) {
-        // Has usage days but no profile yet — still show on board with real numbers
         const rolled = usageRollups.get(au.id);
         byId.set(au.id, mergeStats({
           id: au.id,
           email: au.email,
-          name: au.user_metadata?.full_name || au.user_metadata?.name || (au.email ? au.email.split('@')[0] : 'Member'),
+          name: displayName,
           picture: au.user_metadata?.avatar_url || null,
           handle: null,
-          region: null,
+          region: au.user_metadata?.region || au.user_metadata?.country || null,
           streak_days: 0,
         }, rolled));
+      } else {
+        // Signed up, no profile row yet — appear with honest zeros until first sync
+        byId.set(au.id, {
+          id: au.id,
+          email: au.email,
+          name: displayName,
+          picture: au.user_metadata?.avatar_url || null,
+          handle: null,
+          region: au.user_metadata?.region || au.user_metadata?.country || null,
+          total_browse_sec: 0,
+          total_focus_sec: 0,
+          public_score: 0,
+          public_top_sites: [],
+          streak_days: 0,
+          usage_today_sec: 0,
+          usage_week_sec: 0,
+          usage_month_sec: 0,
+          usage_year_sec: 0,
+          period_stats: null,
+          last_active_at: au.last_sign_in_at || au.created_at || null,
+        });
       }
-      // Skip auth-only accounts with no profile and no usage — not leaderboard members yet
     }
 
     // Last resort: stt_sync.screentime for still-empty profile rows
@@ -471,16 +496,11 @@ export default async function handler(req, res) {
 
     if (lastErr) console.warn('[stt/leaderboard] select warning', lastErr);
 
-    // Drop empty profile shells (Auth placeholders with no synced activity).
-    // Domain mode already requires site_sec > 0 above.
+    // Keep all authenticated profiles on the global/region boards (honest zeros OK).
+    // Domain mode already requires site_sec > 0 above — only members who used that site.
+    // Drop rows with no identity at all (should not happen for Auth users).
     if (!domain) {
-      users = users.filter((u) => {
-        const browse = Number(u._period_browse) || 0;
-        const score = Number(u._period_score) || Number(u.public_score) || 0;
-        const streak = Number(u.streak_days) || 0;
-        const total = Number(u.total_browse_sec) || 0;
-        return browse > 0 || score > 0 || streak > 0 || total > 0;
-      });
+      users = users.filter((u) => u?.id && (u.name || u.email || u.handle));
     }
 
     return res.status(200).json({
@@ -489,13 +509,14 @@ export default async function handler(req, res) {
       region,
       domain: domain || null,
       period,
-      count: users.length,
+      count: Math.min(users.length, limit),
       ranking: domain
         ? `time_on_${domain}`
         : region !== 'global'
           ? `total_tracked_time_${region}`
           : 'total_tracked_time_global',
       source: 'supabase-service-role',
+      include_signed_up: !domain,
     });
   } catch (e) {
     console.error('[stt/leaderboard]', e);
