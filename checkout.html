@@ -25,12 +25,12 @@
         <button type="button" class="active" data-currency="USD" id="curUSD">USD</button>
         <button type="button" data-currency="INR" id="curINR">INR</button>
       </div>
-      <p class="ck-fx-note">Plans: $4.99 / $39 / $79 · INR ₹299 / ₹2,499 / ₹4,999. Tax shown below for USD.</p>
+      <p class="ck-fx-note" id="fxNote">Plans: $4.99 / $39 / $79 · INR ₹475 / ₹3,710 / ₹7,514 (FX ₹95.12/USD). USD tax below; INR tax included.</p>
 
       <div class="ck-plan-pills" role="tablist" aria-label="Billing cycle">
-        <button type="button" data-cycle="monthly">Monthly · $4.99</button>
-        <button type="button" class="active" data-cycle="yearly">Yearly · $39</button>
-        <button type="button" data-cycle="lifetime">Lifetime · $79</button>
+        <button type="button" data-cycle="monthly" data-label-usd="Monthly · $4.99" data-label-inr="Monthly · ₹475">Monthly · $4.99</button>
+        <button type="button" class="active" data-cycle="yearly" data-label-usd="Yearly · $39" data-label-inr="Yearly · ₹3,710">Yearly · $39</button>
+        <button type="button" data-cycle="lifetime" data-label-usd="Lifetime · $79" data-label-inr="Lifetime · ₹7,514">Lifetime · $79</button>
       </div>
 
       <div class="ck-product">
@@ -100,8 +100,13 @@
 
   <script>
     const GST = 0.18;
+    const INR_USD_RATE = 95.12; // mirror Vercel INR_USD_RATE default
     const USD = { monthly: 4.99, yearly: 39, lifetime: 79 };
-    const INR = { monthly: 299, yearly: 2499, lifetime: 4999 };
+    const INR = {
+      monthly: Math.round(USD.monthly * INR_USD_RATE),
+      yearly: Math.round(USD.yearly * INR_USD_RATE),
+      lifetime: Math.round(USD.lifetime * INR_USD_RATE),
+    };
     let cycle = "yearly";
     let currency = "USD";
 
@@ -120,9 +125,16 @@
 
     if (["monthly", "yearly", "lifetime"].includes(checkoutCtx.cycle)) cycle = checkoutCtx.cycle;
     if (checkoutCtx.email.includes("@")) document.getElementById("buyerEmail").value = checkoutCtx.email;
-    if (checkoutCtx.provider === "razorpay") currency = "INR";
+    // Honor ?currency= from payments.js; Razorpay still defaults INR
+    const curQ = (params.get("currency") || "").toUpperCase();
+    if (curQ === "INR" || curQ === "USD") currency = curQ;
+    else if (checkoutCtx.provider === "razorpay") currency = "INR";
     if (params.get("cancel") === "1") {
       setTimeout(() => setStatus("Payment cancelled. You’re still on Free — try again when ready.", "error"), 0);
+    }
+
+    function tokenMissingMsg() {
+      return "Open Plans in the extension while signed in, then tap Upgrade — checkout needs your session token.";
     }
 
     function authHeaders() {
@@ -177,13 +189,23 @@
       document.getElementById("taxLabel").textContent = q.taxIncluded ? "Taxes" : "GST (18%)";
       document.getElementById("rowTotal").textContent = money(q.total, currency);
       document.getElementById("annualToggle").checked = cycle === "yearly";
-      document.querySelectorAll("[data-cycle]").forEach((b) => b.classList.toggle("active", b.dataset.cycle === cycle));
+      document.querySelectorAll("[data-cycle]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.cycle === cycle);
+        const label = currency === "INR" ? b.dataset.labelInr : b.dataset.labelUsd;
+        if (label) b.textContent = label;
+      });
       document.getElementById("curUSD").classList.toggle("active", currency === "USD");
       document.getElementById("curINR").classList.toggle("active", currency === "INR");
       document.getElementById("annualHint").textContent =
         cycle === "yearly" ? "Best value — save versus paying monthly" :
         cycle === "lifetime" ? "Pay once · keep Pro on this email" :
         "Billed monthly · renew before expiry to continue";
+      const fx = document.getElementById("fxNote");
+      if (fx) {
+        fx.textContent = currency === "INR"
+          ? `INR list: ₹${INR.monthly} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} · FX ₹${INR_USD_RATE}/USD · tax included`
+          : `USD $4.99 / $39 / $79 · INR ₹${INR.monthly} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} (FX ₹${INR_USD_RATE}/USD). Tax shown below for USD.`;
+      }
     }
 
     function setStatus(msg, kind) {
@@ -220,7 +242,7 @@
       const e = requireEmail();
       if (!e) return;
       if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
-        setStatus("Open checkout from the extension while signed in (token missing).", "error");
+        setStatus(tokenMissingMsg(), "error");
         return;
       }
       currency = "USD";
@@ -256,7 +278,7 @@
       const e = requireEmail();
       if (!e) return;
       if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
-        setStatus("Open checkout from the extension while signed in (token missing).", "error");
+        setStatus(tokenMissingMsg(), "error");
         return;
       }
       currency = "INR";

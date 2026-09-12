@@ -2,10 +2,11 @@
  * Checkout client — used if linked from checkout.html; keep in sync with inline script.
  * Reads auth query params and opens real PayPal sandbox / Razorpay test checkout.
  */
+/** Mirror website/api/_lib/pricing.js at INR_USD_RATE=95.12 */
 const PRICES = {
-  monthly: { usd: "$4.99", inr: "₹299", note: "Billed monthly · cancel anytime" },
-  yearly: { usd: "$39", inr: "₹2,499", note: "Best value · ~35% off monthly" },
-  lifetime: { usd: "$79", inr: "₹4,999", note: "One payment · all future updates" },
+  monthly: { usd: "$4.99", inr: "₹475", note: "Billed monthly · cancel anytime" },
+  yearly: { usd: "$39", inr: "₹3,710", note: "Best value · ~35% off monthly" },
+  lifetime: { usd: "$79", inr: "₹7,514", note: "One payment · all future updates" },
 };
 
 const params = new URLSearchParams(location.search);
@@ -24,7 +25,13 @@ const checkoutCtx = {
 let cycle = ["monthly", "yearly", "lifetime"].includes(checkoutCtx.cycle)
   ? checkoutCtx.cycle
   : "yearly";
-let currencyMode = checkoutCtx.provider === "razorpay" ? "INR" : "USD";
+const curQ = (params.get("currency") || "").toUpperCase();
+let currencyMode =
+  curQ === "INR" || curQ === "USD"
+    ? curQ
+    : checkoutCtx.provider === "razorpay"
+      ? "INR"
+      : "USD";
 
 const emailEl = document.getElementById("email") || document.getElementById("buyerEmail");
 const msgEl = document.getElementById("msg") || document.getElementById("statusMsg");
@@ -93,7 +100,7 @@ async function payPaypal() {
   if (!email) return setMsg("Enter the Gmail you use in the extension", false);
   checkoutCtx.email = email;
   if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
-    return setMsg("Open checkout from the extension while signed in.", false);
+    return setMsg("Open Plans in the extension while signed in, then tap Upgrade.", false);
   }
   setMsg("Creating PayPal sandbox order…", true);
   currencyMode = "USD";
@@ -129,7 +136,7 @@ async function payRazorpay() {
   if (!email) return setMsg("Enter the Gmail you use in the extension", false);
   checkoutCtx.email = email;
   if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
-    return setMsg("Open checkout from the extension while signed in.", false);
+    return setMsg("Open Plans in the extension while signed in, then tap Upgrade.", false);
   }
   setMsg("Opening Razorpay test checkout…", true);
   currencyMode = "INR";

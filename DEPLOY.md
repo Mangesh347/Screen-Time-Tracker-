@@ -76,6 +76,7 @@ Copy from `.env.example`:
 | `RAZORPAY_TEST_KEY_ID` / `RAZORPAY_TEST_KEY_SECRET` | Razorpay Dashboard → Test (`rzp_test_*`) |
 | `RAZORPAY_LIVE_KEY_ID` / `RAZORPAY_LIVE_KEY_SECRET` | Live keys only when MODE=live |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Fallback aliases |
+| `INR_USD_RATE` | Rupees per 1 USD for Razorpay list prices (default **95.12** → ₹475 / ₹3,710 / ₹7,514) |
 
 Missing payment keys return **503** (no simulated Pro). Redeploy after saving env vars.
 
