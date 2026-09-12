@@ -7,9 +7,18 @@
   <meta name="description" content="Upgrade to Screen Time Tracker Pro. Secure checkout from $4.99/mo." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="checkout.css" />
   <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <style>
+    /* STT checkout accent — distinct from CE; keeps layout shell */
+    .ck-body { font-family: "DM Sans", system-ui, sans-serif; }
+    .ck-brand, .ck-price-hero, .ck-right h1 { font-family: Fraunces, Georgia, serif; }
+    .ck-brand-mark { background: #0f766e; }
+    .ck-btn-dark { background: #0f766e; }
+    .ck-btn-dark:hover { background: #0d9488; }
+    .ck-plan-pills button.active { border-color: #0f766e; box-shadow: 0 0 0 1px #0f766e; }
+  </style>
 </head>
 <body class="ck-body">
   <div class="ck-shell" id="checkoutShell">
@@ -19,13 +28,13 @@
       <p class="ck-kicker">Upgrade to Screen Time Tracker Pro</p>
       <p class="ck-price-hero" id="heroPrice">$46.02 per year</p>
 
-      <div class="ck-test on ck-trust" id="testBanner">Upgrade to Pro — secure live checkout. Pro unlocks on your billing email.</div>
+      <div class="ck-test on ck-trust" id="testBanner">Loading payment mode…</div>
 
       <div class="ck-currency" role="group" aria-label="Currency">
         <button type="button" class="active" data-currency="USD" id="curUSD">USD</button>
         <button type="button" data-currency="INR" id="curINR">INR</button>
       </div>
-      <p class="ck-fx-note" id="fxNote">Plans: $4.99 / $39 / $79 · INR ₹475 / ₹3,710 / ₹7,514 (FX ₹95.12/USD). USD tax below; INR tax included.</p>
+      <p class="ck-fx-note" id="fxNote">Plans: $4.99 / $39 / $79 · INR tax included via FX.</p>
 
       <div class="ck-plan-pills" role="tablist" aria-label="Billing cycle">
         <button type="button" data-cycle="monthly" data-label-usd="Monthly · $4.99" data-label-inr="Monthly · ₹475">Monthly · $4.99</button>
@@ -38,7 +47,7 @@
           <div class="ck-product-ico">ST</div>
           <div style="flex:1">
             <h2>Screen Time Tracker Pro</h2>
-            <p>Hard Lock, unlimited limits, 90-day history, schedules, sync &amp; deep cleaner. Bound to your email.</p>
+            <p>Hard Lock, unlimited limits, 90-day history, schedules, sync &amp; deep cleaner. Bound to your billing email.</p>
           </div>
           <div class="ck-product-price" id="productPrice">$39.00</div>
         </div>
@@ -85,7 +94,7 @@
       <p class="ck-status" id="statusMsg" role="status"></p>
 
       <p class="ck-legal">
-        By confirming, you authorize Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor) to charge this payment method for the selected plan.
+        By confirming, you authorize Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor) to charge this payment method for the selected Screen Time Tracker Pro plan.
         Monthly/yearly Pro ends on the stated date unless renewed. Lifetime is one-time.
         <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="refund.html">Refunds</a>
       </p>
@@ -100,15 +109,18 @@
 
   <script>
     const GST = 0.18;
-    const INR_USD_RATE = 95.12; // mirror Vercel INR_USD_RATE default
+    let INR_USD_RATE = 95.12;
     const USD = { monthly: 4.99, yearly: 39, lifetime: 79 };
-    const INR = {
+    let INR = {
       monthly: Math.round(USD.monthly * INR_USD_RATE),
       yearly: Math.round(USD.yearly * INR_USD_RATE),
       lifetime: Math.round(USD.lifetime * INR_USD_RATE),
     };
     let cycle = "yearly";
     let currency = "USD";
+    let paymentMode = "sandbox";
+    let providers = { paypal: false, razorpay: false };
+    let allowSimulated = false;
 
     const params = new URLSearchParams(location.search);
     const checkoutCtx = {
@@ -125,16 +137,11 @@
 
     if (["monthly", "yearly", "lifetime"].includes(checkoutCtx.cycle)) cycle = checkoutCtx.cycle;
     if (checkoutCtx.email.includes("@")) document.getElementById("buyerEmail").value = checkoutCtx.email;
-    // Honor ?currency= from payments.js; Razorpay still defaults INR
     const curQ = (params.get("currency") || "").toUpperCase();
     if (curQ === "INR" || curQ === "USD") currency = curQ;
     else if (checkoutCtx.provider === "razorpay") currency = "INR";
     if (params.get("cancel") === "1") {
       setTimeout(() => setStatus("Payment cancelled. You’re still on Free — try again when ready.", "error"), 0);
-    }
-
-    function tokenMissingMsg() {
-      return "Open Plans in the extension while signed in, then tap Upgrade — checkout needs your session token.";
     }
 
     function authHeaders() {
@@ -155,7 +162,14 @@
     }
 
     function apiError(data, fallback) {
+      if (data && Array.isArray(data.missing_env) && data.missing_env.length) {
+        return (data.message || fallback || "Missing keys") + " (" + data.missing_env.join(", ") + ")";
+      }
       return (data && (data.message || data.error)) || fallback || "Request failed";
+    }
+
+    function modeLabel() {
+      return paymentMode === "live" ? "live" : "sandbox";
     }
 
     function money(n, cur) {
@@ -191,8 +205,8 @@
       document.getElementById("annualToggle").checked = cycle === "yearly";
       document.querySelectorAll("[data-cycle]").forEach((b) => {
         b.classList.toggle("active", b.dataset.cycle === cycle);
-        const label = currency === "INR" ? b.dataset.labelInr : b.dataset.labelUsd;
-        if (label) b.textContent = label;
+        const lbl = currency === "INR" ? b.dataset.labelInr : b.dataset.labelUsd;
+        if (lbl) b.textContent = lbl;
       });
       document.getElementById("curUSD").classList.toggle("active", currency === "USD");
       document.getElementById("curINR").classList.toggle("active", currency === "INR");
@@ -234,20 +248,64 @@
         is_pro: data.is_pro === false ? "0" : "1",
       });
       if (checkoutCtx.ext_id) qs.set("ext_id", checkoutCtx.ext_id);
-      if (checkoutCtx.user_id) qs.set("user_id", checkoutCtx.user_id);
+      if (checkoutCtx.user_id || data.user_id) qs.set("user_id", data.user_id || checkoutCtx.user_id);
       location.href = "/success.html?" + qs.toString();
+    }
+
+    async function loadConfig() {
+      const banner = document.getElementById("testBanner");
+      try {
+        const res = await fetch("/api/config");
+        const data = await res.json();
+        paymentMode = data.paymentMode || data.payment_mode || "sandbox";
+        allowSimulated = !!data.allow_simulated_checkout;
+        providers = data.providers || providers;
+        if (Number(data.inrUsdRate || data.inr_usd_rate) > 0) {
+          INR_USD_RATE = Number(data.inrUsdRate || data.inr_usd_rate);
+          INR = {
+            monthly: Math.round(USD.monthly * INR_USD_RATE),
+            yearly: Math.round(USD.yearly * INR_USD_RATE),
+            lifetime: Math.round(USD.lifetime * INR_USD_RATE),
+          };
+          document.querySelectorAll("[data-cycle]").forEach((b) => {
+            const c = b.dataset.cycle;
+            if (INR[c]) b.dataset.labelInr = `${c === "monthly" ? "Monthly" : c === "yearly" ? "Yearly" : "Lifetime"} · ₹${INR[c].toLocaleString("en-IN")}`;
+          });
+        }
+        if (data.plans) {
+          ["monthly", "yearly", "lifetime"].forEach((id) => {
+            if (data.plans[id]?.priceUSD != null) USD[id] = Number(data.plans[id].priceUSD);
+            if (data.plans[id]?.priceINR != null) INR[id] = Number(data.plans[id].priceINR);
+          });
+        }
+        if (banner) {
+          banner.classList.add("on");
+          if (paymentMode === "live") {
+            banner.classList.add("ck-trust");
+            banner.classList.remove("ck-practice");
+            banner.textContent = "Live checkout — real charges. Pro unlocks on your billing email.";
+          } else {
+            banner.classList.add("ck-practice");
+            banner.textContent = allowSimulated
+              ? "Sandbox / test mode — test keys or simulated preview. Pro unlocks only after a verified test payment."
+              : "Sandbox / test mode — use PayPal sandbox or Razorpay test keys. No live charges.";
+          }
+        }
+      } catch (_) {
+        if (banner) {
+          banner.classList.add("on", "ck-practice");
+          banner.textContent = "Could not load /api/config — assuming sandbox.";
+        }
+      }
+      render();
     }
 
     async function payPaypal() {
       const e = requireEmail();
       if (!e) return;
-      if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
-        setStatus(tokenMissingMsg(), "error");
-        return;
-      }
       currency = "USD";
       render();
-      setStatus("Creating PayPal sandbox order…");
+      setStatus(`Creating PayPal ${modeLabel()} order…`);
       try {
         const res = await fetch("/api/paypal/create-order", {
           method: "POST",
@@ -256,7 +314,27 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) throw new Error(apiError(data, "PayPal order failed"));
-        if (!data.approve_url) throw new Error("No PayPal approve URL — check sandbox keys on the server.");
+
+        if (data.mode === "simulated_preview") {
+          setStatus("Simulated preview only — add PayPal keys to charge. Capture will not unlock Pro unless ALLOW_SIMULATED_CHECKOUT is on.", "error");
+          if (allowSimulated && data.order_id) {
+            sessionStorage.setItem(
+              "stt_pp_order",
+              JSON.stringify({
+                order_id: data.order_id,
+                email: e,
+                cycle,
+                access_token: checkoutCtx.access_token,
+                user_id: data.user_id || checkoutCtx.user_id,
+                ext_id: checkoutCtx.ext_id,
+                simulated: true,
+              }),
+            );
+          }
+          return;
+        }
+
+        if (!data.approve_url) throw new Error("No PayPal approve URL — check keys for " + modeLabel() + " mode.");
         sessionStorage.setItem(
           "stt_pp_order",
           JSON.stringify({
@@ -264,10 +342,11 @@
             email: e,
             cycle,
             access_token: checkoutCtx.access_token,
-            user_id: checkoutCtx.user_id,
+            user_id: data.user_id || checkoutCtx.user_id,
             ext_id: checkoutCtx.ext_id,
           }),
         );
+        if (data.user_id) checkoutCtx.user_id = data.user_id;
         location.href = data.approve_url;
       } catch (err) {
         setStatus(err.message, "error");
@@ -277,13 +356,9 @@
     async function payRazorpay() {
       const e = requireEmail();
       if (!e) return;
-      if (!checkoutCtx.access_token && !checkoutCtx.user_id) {
-        setStatus(tokenMissingMsg(), "error");
-        return;
-      }
       currency = "INR";
       render();
-      setStatus("Opening Razorpay test checkout…");
+      setStatus(`Opening Razorpay ${modeLabel()} checkout…`);
       try {
         const res = await fetch("/api/razorpay/create-order", {
           method: "POST",
@@ -292,10 +367,22 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) throw new Error(apiError(data, "Razorpay order failed"));
+
+        if (data.mode === "simulated_preview") {
+          setStatus(
+            "Simulated Razorpay preview — add " +
+              ((data.missing_env && data.missing_env.join(", ")) || "RAZORPAY_TEST_KEY_SECRET") +
+              " on Vercel to take real test payments.",
+            "error",
+          );
+          return;
+        }
+
         if (!data.key_id || !data.order_id) {
-          throw new Error("Razorpay keys/order missing on server. Add rzp_test_* env vars.");
+          throw new Error("Razorpay keys/order missing on server.");
         }
         if (typeof Razorpay === "undefined") throw new Error("Razorpay Checkout.js not loaded");
+        if (data.user_id) checkoutCtx.user_id = data.user_id;
 
         const rzp = new Razorpay({
           key: data.key_id,
@@ -305,6 +392,7 @@
           description: data.quote?.desc || "Pro",
           order_id: data.order_id,
           prefill: { email: e },
+          theme: { color: "#0f766e" },
           handler: async function (response) {
             setStatus("Verifying payment…");
             try {
@@ -372,7 +460,7 @@
         setStatus("Missing PayPal order token — payment not captured. You’re still Free.", "error");
         return;
       }
-      setStatus("Confirming PayPal payment…");
+      setStatus(`Confirming PayPal ${modeLabel()} payment…`);
       try {
         const res = await fetch("/api/paypal/capture-order", {
           method: "POST",
@@ -383,14 +471,14 @@
         if (!res.ok || !data.success || data.is_pro !== true) {
           throw new Error(apiError(data, "Capture failed — you remain on Free."));
         }
+        sessionStorage.removeItem("stt_pp_order");
         goSuccess(data);
       } catch (err) {
         setStatus(err.message, "error");
       }
     }
 
-    render();
-    maybeCapturePaypal();
+    loadConfig().then(() => maybeCapturePaypal());
   </script>
 </body>
 </html>

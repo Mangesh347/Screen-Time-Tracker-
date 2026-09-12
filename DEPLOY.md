@@ -1,86 +1,88 @@
 # Deploy Screen Time Tracker website (Vercel)
 
 Your Supabase: `https://mproxhlssrniwlcywfhq.supabase.co`  
-Google Web Client ID: `179379728844-5tq61kd6dj85mulki8oftakk37je16jr.apps.googleusercontent.com`
+Live site (example): `https://screen-time-tracker-seven.vercel.app`  
+Repo: push this `website/` folder to GitHub → Vercel auto-redeploys.
 
 ## Leaderboard not listing members?
 
-If the board shows only you, check this URL in a browser:
+If the board shows only you, check:
 
 `https://screen-time-tracker-seven.vercel.app/api/stt/leaderboard?limit=5`
 
 | Response | Meaning |
 |----------|---------|
-| **404** | API not deployed — redeploy this `website/` folder (env key alone cannot fix a missing route) |
-| `{"error":"SUPABASE_SERVICE_ROLE_KEY missing..."}` | Add exact name `SUPABASE_SERVICE_ROLE_KEY` on **this** Vercel project → Redeploy |
-| `{"users":[...],"source":"supabase-service-role"}` | Working — refresh Leaderboard in the extension |
-
-`/api/stt/access` can work while `/api/stt/leaderboard` 404s — they are separate functions. `vercel.json` must rewrite all of them (access, leaderboard, sync-profile, guest-score).
-
-Redeploy from this folder:
-
-```bash
-cd "C:\Extension\WEB SCREEN TIME (LATEST)\Screen_Time_Tracker\website"
-npx vercel login
-npx vercel --prod
-```
+| **404** | API not deployed — redeploy this `website/` folder |
+| `{"error":"SUPABASE_SERVICE_ROLE_KEY missing..."}` | Add exact name `SUPABASE_SERVICE_ROLE_KEY` → Redeploy |
+| `{"users":[...],"source":"supabase-service-role"}` | Working |
 
 ## 1) Supabase SQL (required)
 
-SQL Editor → paste and run **in order**:
+SQL Editor → run in order:
 
-1. `../supabase/schema.sql` (base tables, if not already applied)
-2. `../supabase/schema-v5.sql` (usage days, social, notifications, guest scores)
-3. If you see missing-column errors: `../supabase/fix-profiles.sql` then wait a few seconds (or run `notify pgrst, 'reload schema';`)
-4. **Leaderboard real stats (required for Global/Today non-zero peers):**  
-   `supabase/migrations/20260912_global_leaderboard_real_stats.sql`  
-   (same file also at `../supabase/migrations/20260912_global_leaderboard_real_stats.sql` in the extension tree)
+1. `../supabase/schema.sql` (if not applied)
+2. `../supabase/schema-v5.sql`
+3. Fix-ups: `../supabase/fix-profiles.sql` if needed
+4. Leaderboard migrations under `supabase/migrations/`
 
-Also enable **Email** provider (Auth → Providers → Email) for password sign-up.
+Enable **Email** provider for password sign-up.
 
-## 2) Supabase Auth → Google
-
-1. Authentication → Providers → **Google** → Enable  
-2. Client ID = the Google Web client above  
-3. Client Secret = from Google Cloud (the one ending `…S6qB` / rotate if lost)  
-4. Redirect URL already in Google:  
-   `https://mproxhlssrniwlcywfhq.supabase.co/auth/v1/callback`  
-5. Auth → URL Configuration → add:  
-   `https://pnpaojmenmeplajemjhjpjckcngbpeno.chromiumapp.org/`  
-   (and your live extension ID URI if different)
-
-## 3) Deploy this folder to Vercel
+## 2) Deploy / redeploy
 
 ```bash
 cd "C:\Extension\WEB SCREEN TIME (LATEST)\Screen_Time_Tracker\website"
-npm install
-npx vercel
+git push origin main
+# or: npx vercel --prod
 ```
 
-Create a **new** Vercel project (don’t overwrite Claude Enhancer).
+## 3) Vercel Environment Variables
 
-## 4) Vercel Environment Variables
+Copy from `.env.example`. Names must match exactly.
 
-Copy from `.env.example`:
+### Already on many STT projects (keep / verify)
 
-| Key | Value |
+| Key | Notes |
 |-----|--------|
-| `SITE_URL` | `https://YOUR-PROJECT.vercel.app` |
-| `SUPABASE_URL` | `https://mproxhlssrniwlcywfhq.supabase.co` |
-| `SUPABASE_ANON_KEY` | Project Settings → API → anon |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → service_role (**secret**) |
-| `MODE` | `sandbox` (default) or `live` |
-| `PAYPAL_TEST_CLIENT_ID` / `PAYPAL_TEST_CLIENT_SECRET` | PayPal Developer → Sandbox app |
-| `PAYPAL_LIVE_CLIENT_ID` / `PAYPAL_LIVE_CLIENT_SECRET` | Live app (only when MODE=live) |
-| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | Fallback aliases if TEST_/LIVE_ not set |
-| `RAZORPAY_TEST_KEY_ID` / `RAZORPAY_TEST_KEY_SECRET` | Razorpay Dashboard → Test (`rzp_test_*`) |
-| `RAZORPAY_LIVE_KEY_ID` / `RAZORPAY_LIVE_KEY_SECRET` | Live keys only when MODE=live |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Fallback aliases |
-| `INR_USD_RATE` | Rupees per 1 USD for Razorpay list prices (default **95.12** → ₹475 / ₹3,710 / ₹7,514) |
+| `PAYMENT_TEST_MODE` | `true` = sandbox, `false` = live |
+| `ALLOW_LIVE_PAYMENTS` | Optional live override when not in test |
+| `ALLOW_SIMULATED_CHECKOUT` | Soft SIM preview if keys missing; Pro only for `SIM_*` orders when true |
+| `PAYPAL_TEST_CLIENT_ID` | Sandbox app client id |
+| `PAYPAL_*SECRET` / `PAYPAL_TEST_CLIENT_SECRET` | Sandbox secret (fix truncated values) |
+| `PAYPAL_LIVE_CLIENT_ID` | Live app (used only in live mode) |
+| `PAYPAL_WEBHOOK_ID` | Optional |
+| `RAZORPAY_TEST_KEY_ID` | `rzp_test_*` |
+| `RAZORPAY_LIVE_KEY_ID` | Live key id |
+| `SUPABASE_*` | URL + anon + service role |
+| `MAIL_FROM` | Receipt / welcome from-address |
+| `ENTITLEMENT_SECRET` | Signing / entitlement ops |
+| `CRON_SECRET` | Cron routes |
 
-Missing payment keys return **503** (no simulated Pro). Redeploy after saving env vars.
+### Must add now (if missing)
 
-## 5) Point the extension at your site
+| Key | Suggested value |
+|-----|-----------------|
+| **`RAZORPAY_TEST_KEY_SECRET`** | Razorpay Dashboard → API Keys → Test **Key Secret** (required if KEY_ID is set) |
+| **`SITE_URL`** | `https://screen-time-tracker-seven.vercel.app` (no trailing slash) |
+| **`INR_USD_RATE`** | `95.12` |
+| `MODE` | `sandbox` (optional; `PAYMENT_TEST_MODE` wins when set) |
+| `PAYPAL_TEST_CLIENT_SECRET` | Re-paste if truncated / wrong |
+
+Legacy fallbacks still work: `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`, `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`.
+
+After saving env vars → **Redeploy**.
+
+### Mode resolution (server)
+
+1. `PAYMENT_TEST_MODE` true → sandbox; false → live  
+2. Else `MODE` / `PAYMENT_MODE` / `PAYPAL_MODE` = sandbox\|test\|live  
+3. Else `ALLOW_LIVE_PAYMENTS=true` → live  
+4. Else if `PAYPAL_TEST_*` present → sandbox  
+5. Default → sandbox  
+
+Missing provider keys return **503** with `missing_env: ["VAR_NAME", …]`.  
+If `ALLOW_SIMULATED_CHECKOUT=true`, create-order may return `mode: "simulated_preview"` (`SIM_*` ids). Capture/verify unlocks Pro for those **only** when that flag is on.
+
+## 4) Point the extension at your site
 
 In `src/config.js`:
 
@@ -89,20 +91,18 @@ checkoutBaseUrl: "https://YOUR-PROJECT.vercel.app/checkout.html",
 billingApiUrl: "https://YOUR-PROJECT.vercel.app/api/stt/access",
 ```
 
-Add host permission for your Vercel domain in `manifest.json` if needed.
+## 5) Test flow
 
-## 6) Test flow
-
-1. Load unpacked extension  
-2. Sign in with Google  
-3. Open Pro → PayPal or Razorpay  
-4. Pay (sandbox)  
-5. Reopen popup → plan should become Pro  
+1. Open `https://YOUR-PROJECT.vercel.app/api/config` — check `paymentMode`, `plans`, `providers`  
+2. Open checkout with `?email=you@gmail.com` (no extension token required)  
+3. PayPal sandbox or Razorpay test → Pro on that email / user_id  
+4. Reopen extension → Pro  
 
 ## API map
 
 | Route | Purpose |
 |-------|---------|
+| `GET /api/config` | Public mode, FX, plans, provider booleans |
 | `GET /api/stt/access?email=` | Extension entitlement check |
 | `POST /api/paypal/create-order` | Start PayPal |
 | `POST /api/paypal/capture-order` | Finish PayPal → `stt_entitlements` |

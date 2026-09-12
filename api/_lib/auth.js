@@ -40,7 +40,6 @@ export async function userIdFromEmail(email) {
   const { url, key, ok } = supabaseConfig();
   if (!ok) return null;
   try {
-    // GoTrue admin filter
     const res = await fetch(
       `${url}/auth/v1/admin/users?page=1&per_page=200`,
       { headers: { apikey: key, Authorization: `Bearer ${key}` } },
@@ -52,6 +51,55 @@ export async function userIdFromEmail(email) {
       (u) => normalizeEmail(u.email) === e,
     );
     if (hit?.id) return { id: hit.id, email: e };
+  } catch {}
+  return null;
+}
+
+/**
+ * Create a lightweight Auth user for marketing-link checkout (?email= only).
+ * Idempotent: if the email already exists, returns that user.
+ */
+export async function createCheckoutUserByEmail(email) {
+  const e = normalizeEmail(email);
+  if (!e || !e.includes("@")) return null;
+
+  const existing = await userIdFromEmail(e);
+  if (existing?.id) return existing;
+
+  const { url, key, ok } = supabaseConfig();
+  if (!ok) return null;
+
+  try {
+    const res = await fetch(`${url}/auth/v1/admin/users`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: e,
+        email_confirm: true,
+        user_metadata: { source: "website_checkout" },
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data?.id) {
+      await sbFetch(`/rest/v1/stt_profiles?on_conflict=id`, {
+        method: "POST",
+        prefer: "resolution=merge-duplicates,return=minimal",
+        body: {
+          id: data.id,
+          email: e,
+          updated_at: new Date().toISOString(),
+        },
+      }).catch(() => {});
+      return { id: data.id, email: e, created: true };
+    }
+    // Already registered — look up again
+    if (res.status === 422 || String(data?.msg || data?.message || "").toLowerCase().includes("already")) {
+      return userIdFromEmail(e);
+    }
   } catch {}
   return null;
 }
@@ -78,7 +126,6 @@ export async function resolveCheckoutUser(req, body = {}) {
     if (byEmail?.id && byEmail.id === claimedId) {
       return { id: claimedId, email };
     }
-    // Claimed id without matching email — still allow if profile matches id
     try {
       const prof = await sbFetch(
         `/rest/v1/stt_profiles?id=eq.${encodeURIComponent(claimedId)}&select=id,email&limit=1`,
@@ -98,4 +145,21 @@ export async function resolveCheckoutUser(req, body = {}) {
   }
 
   return null;
+}
+
+/**
+ * Like resolveCheckoutUser, but for email-only marketing checkout creates a user when missing.
+ * Prefer Bearer / user_id when present; never invent a user when a claimed user_id fails.
+ */
+export async function ensureCheckoutUser(req, body = {}) {
+  const resolved = await resolveCheckoutUser(req, body);
+  if (resolved?.id) return resolved;
+
+  const email = normalizeEmail(body.email);
+  const claimedId = body.user_id ? String(body.user_id) : null;
+  // Do not create if they claimed a specific user_id that we couldn't verify
+  if (claimedId) return null;
+  if (!email || !email.includes("@")) return null;
+
+  return createCheckoutUserByEmail(email);
 }

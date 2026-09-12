@@ -1,10 +1,15 @@
-import { quoteUSD, computeExpiresAt, paymentMode, getPlan } from "../_lib/pricing.js";
-import { resolveCheckoutUser } from "../_lib/auth.js";
+import {
+  quoteUSD,
+  computeExpiresAt,
+  paymentMode,
+  getPlan,
+  paypalCredentials,
+  missingPaypalEnvVars,
+  allowSimulatedCheckout,
+  siteUrl,
+} from "../_lib/pricing.js";
+import { ensureCheckoutUser } from "../_lib/auth.js";
 import { sbFetch } from "../_lib/supabase.js";
-
-function siteUrl() {
-  return (process.env.SITE_URL || "https://screen-time-tracker-seven.vercel.app").replace(/\/$/, "");
-}
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -15,33 +20,37 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const mode = paymentMode();
-  const clientId =
-    mode === "live"
-      ? process.env.PAYPAL_LIVE_CLIENT_ID || process.env.PAYPAL_CLIENT_ID
-      : process.env.PAYPAL_TEST_CLIENT_ID || process.env.PAYPAL_CLIENT_ID;
-  const clientSecret =
-    mode === "live"
-      ? process.env.PAYPAL_LIVE_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET
-      : process.env.PAYPAL_TEST_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET;
-  const apiBase = mode === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
+  const creds = paypalCredentials();
 
   try {
     const body = req.body || {};
     const { cycle = "yearly", email = "" } = body;
-    const authUser = await resolveCheckoutUser(req, body);
+    const authUser = await ensureCheckoutUser(req, body);
     const plan = getPlan(cycle);
     const quote = quoteUSD(cycle);
     const amount = quote.total.toFixed(2);
 
+    const billingEmail =
+      authUser?.email || String(email || "").toLowerCase().trim();
+
+    if (!billingEmail || !billingEmail.includes("@")) {
+      return res.status(400).json({
+        error: "email_required",
+        message: "Enter a billing email for Pro activation.",
+        mode,
+      });
+    }
+
     if (!authUser?.id) {
       return res.status(401).json({
         error: "sign_in_required",
-        message: "Sign in to Screen Time Tracker first, then open checkout from the extension (Pro tab).",
+        message:
+          "Could not resolve a Screen Time Tracker account for this email. Sign in from the extension, or use the same Gmail you will use in the app.",
+        mode,
       });
     }
 
     const userId = authUser.id;
-    const billingEmail = authUser.email || String(email || "").toLowerCase().trim();
 
     const sessionRow = {
       user_id: userId,
@@ -56,17 +65,44 @@ export default async function handler(req, res) {
       metadata: { mode },
     };
 
-    if (!clientId || !clientSecret) {
+    const missing = missingPaypalEnvVars();
+    if (missing.length) {
+      if (allowSimulatedCheckout()) {
+        const orderId = `SIM_PP_${Date.now()}`;
+        await sbFetch(`/rest/v1/stt_checkout_sessions`, {
+          method: "POST",
+          body: {
+            ...sessionRow,
+            order_id: orderId,
+            metadata: { mode: "simulated_preview", missing },
+          },
+        }).catch(() => {});
+        return res.status(200).json({
+          success: true,
+          order_id: orderId,
+          status: "CREATED",
+          amount,
+          currency: "USD",
+          quote,
+          approve_url: null,
+          mode: "simulated_preview",
+          payment_mode: mode,
+          missing_env: missing,
+          user_id: userId,
+          message:
+            "Simulated PayPal preview — no charge. Capture will not unlock Pro unless ALLOW_SIMULATED_CHECKOUT and SIM_ order.",
+        });
+      }
       return res.status(503).json({
         error: "paypal_keys_missing",
-        message:
-          "Add PAYPAL_TEST_CLIENT_ID + PAYPAL_TEST_CLIENT_SECRET (sandbox) in Vercel env, set MODE=sandbox, redeploy.",
+        message: `Missing Vercel env: ${missing.join(", ")}. Add them, then redeploy.`,
+        missing_env: missing,
         mode,
       });
     }
 
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+    const auth = Buffer.from(`${creds.clientId}:${creds.clientSecret}`).toString("base64");
+    const tokenRes = await fetch(`${creds.apiBase}/v1/oauth2/token`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -101,7 +137,7 @@ export default async function handler(req, res) {
     if (extId) returnQs.set("ext_id", extId);
     if (body.access_token) returnQs.set("access_token", String(body.access_token).slice(0, 2000));
 
-    const orderRes = await fetch(`${apiBase}/v2/checkout/orders`, {
+    const orderRes = await fetch(`${creds.apiBase}/v2/checkout/orders`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${access_token}`,

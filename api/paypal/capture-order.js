@@ -1,6 +1,14 @@
-import { computeExpiresAt, quoteUSD, paymentMode, getPlan } from "../_lib/pricing.js";
+import {
+  computeExpiresAt,
+  quoteUSD,
+  paymentMode,
+  getPlan,
+  paypalCredentials,
+  missingPaypalEnvVars,
+  allowSimulatedCheckout,
+} from "../_lib/pricing.js";
 import { upsertEntitlement, claimPaymentEvent, markEventProcessed } from "../_lib/entitlement.js";
-import { resolveCheckoutUser } from "../_lib/auth.js";
+import { ensureCheckoutUser } from "../_lib/auth.js";
 import { sbFetch } from "../_lib/supabase.js";
 
 export default async function handler(req, res) {
@@ -12,45 +20,105 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const mode = paymentMode();
-  const clientId =
-    mode === "live"
-      ? process.env.PAYPAL_LIVE_CLIENT_ID || process.env.PAYPAL_CLIENT_ID
-      : process.env.PAYPAL_TEST_CLIENT_ID || process.env.PAYPAL_CLIENT_ID;
-  const clientSecret =
-    mode === "live"
-      ? process.env.PAYPAL_LIVE_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET
-      : process.env.PAYPAL_TEST_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET;
-  const apiBase = mode === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
+  const creds = paypalCredentials();
 
   try {
     const body = req.body || {};
     const { order_id, email = "", cycle = "yearly" } = body;
     if (!order_id) return res.status(400).json({ error: "order_id required", is_pro: false });
 
-    if (String(order_id).startsWith("SIM_")) {
-      return res.status(400).json({
-        error: "simulated_not_allowed",
-        message: "Simulated PayPal orders are disabled. Complete a real sandbox checkout.",
-        is_pro: false,
-        mode,
+    const isSim = String(order_id).startsWith("SIM_");
+
+    // Simulated path: only grant Pro when explicitly allowed + SIM_ order
+    if (isSim) {
+      if (!allowSimulatedCheckout()) {
+        return res.status(400).json({
+          error: "simulated_not_allowed",
+          message: "Simulated PayPal orders are disabled. Complete a real checkout.",
+          is_pro: false,
+          mode,
+        });
+      }
+
+      const authUser = await ensureCheckoutUser(req, body);
+      if (!authUser?.id) {
+        return res.status(401).json({
+          error: "sign_in_required",
+          message: "Authenticated user or billing email required",
+          is_pro: false,
+        });
+      }
+
+      const userId = authUser.id;
+      const planCycle = cycle;
+      const quote = quoteUSD(planCycle);
+      const plan = getPlan(planCycle);
+      const expiresAt = computeExpiresAt(planCycle);
+      const billingEmail = authUser.email || String(email || "").toLowerCase().trim();
+
+      await sbFetch(`/rest/v1/stt_checkout_sessions`, {
+        method: "POST",
+        body: {
+          user_id: userId,
+          email: billingEmail,
+          provider: "paypal_simulated",
+          cycle: plan.id,
+          currency: "USD",
+          amount: quote.total,
+          status: "completed",
+          order_id,
+          expires_at: expiresAt,
+          duration_days: plan.days,
+          metadata: { mode: "simulated_preview" },
+        },
+      }).catch(() => {});
+
+      await upsertEntitlement({
+        email: billingEmail,
+        userId,
+        plan: quote.cycle,
+        cycle: quote.cycle,
+        provider: "paypal_simulated",
+        expiresAt,
+        externalId: order_id,
+        paymentId: order_id,
+        orderId: order_id,
+        amount: quote.total,
+        currency: "USD",
+        webhookVerified: false,
+        metadata: { via: "simulated_preview", mode: "simulated_preview" },
+      });
+
+      return res.status(200).json({
+        success: true,
+        status: "COMPLETED",
+        plan: quote.cycle,
+        cycle: quote.cycle,
+        email: billingEmail,
+        user_id: userId,
+        expiresAt,
+        provider: "paypal",
+        is_pro: true,
+        mode: "simulated_preview",
       });
     }
 
-    if (!clientId || !clientSecret) {
+    const missing = missingPaypalEnvVars();
+    if (missing.length) {
       return res.status(503).json({
         error: "paypal_keys_missing",
-        message:
-          "Add PAYPAL_TEST_CLIENT_ID + PAYPAL_TEST_CLIENT_SECRET in Vercel env, set MODE=sandbox, redeploy.",
+        message: `Missing Vercel env: ${missing.join(", ")}. Add them, then redeploy.`,
+        missing_env: missing,
         is_pro: false,
         mode,
       });
     }
 
-    const authUser = await resolveCheckoutUser(req, body);
+    const authUser = await ensureCheckoutUser(req, body);
     if (!authUser?.id) {
       return res.status(401).json({
         error: "sign_in_required",
-        message: "Authenticated user_id required",
+        message: "Authenticated user_id or billing email required",
         is_pro: false,
       });
     }
@@ -59,7 +127,17 @@ export default async function handler(req, res) {
     const sess = await sbFetch(
       `/rest/v1/stt_checkout_sessions?user_id=eq.${encodeURIComponent(userId)}&order_id=eq.${encodeURIComponent(order_id)}&select=*&limit=1`,
     );
-    const session = sess.data?.[0];
+    let session = sess.data?.[0];
+    if (!session) {
+      // Fallback: email-only order lookup (marketing return URL)
+      const billingLookup = authUser.email || String(email || "").toLowerCase().trim();
+      if (billingLookup) {
+        const byEmail = await sbFetch(
+          `/rest/v1/stt_checkout_sessions?email=eq.${encodeURIComponent(billingLookup)}&order_id=eq.${encodeURIComponent(order_id)}&select=*&limit=1`,
+        );
+        session = byEmail.data?.[0];
+      }
+    }
     if (!session) {
       return res.status(403).json({
         error: "Checkout session not found for this user",
@@ -73,8 +151,8 @@ export default async function handler(req, res) {
     const expiresAt = computeExpiresAt(planCycle);
     const billingEmail = authUser.email || String(email || "").toLowerCase().trim();
 
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+    const auth = Buffer.from(`${creds.clientId}:${creds.clientSecret}`).toString("base64");
+    const tokenRes = await fetch(`${creds.apiBase}/v1/oauth2/token`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -87,7 +165,7 @@ export default async function handler(req, res) {
     }
     const { access_token } = await tokenRes.json();
 
-    const capRes = await fetch(`${apiBase}/v2/checkout/orders/${order_id}/capture`, {
+    const capRes = await fetch(`${creds.apiBase}/v2/checkout/orders/${order_id}/capture`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${access_token}`,

@@ -7,7 +7,7 @@ import {
   upsertEntitlement,
   demoteEntitlement,
 } from "../_lib/entitlement.js";
-import { computeExpiresAt, getPlan, paymentMode } from "../_lib/pricing.js";
+import { computeExpiresAt, getPlan, paymentMode, paypalCredentials } from "../_lib/pricing.js";
 import { sbFetch } from "../_lib/supabase.js";
 
 export const config = { api: { bodyParser: false } };
@@ -21,22 +21,10 @@ function getRawBody(req) {
   });
 }
 
-function apiBase() {
-  return paymentMode() === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
-}
-
 async function getAccessToken() {
-  const mode = paymentMode();
-  const clientId =
-    mode === "live"
-      ? process.env.PAYPAL_LIVE_CLIENT_ID || process.env.PAYPAL_CLIENT_ID
-      : process.env.PAYPAL_TEST_CLIENT_ID || process.env.PAYPAL_CLIENT_ID;
-  const clientSecret =
-    mode === "live"
-      ? process.env.PAYPAL_LIVE_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET
-      : process.env.PAYPAL_TEST_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET;
+  const { clientId, clientSecret, apiBase } = paypalCredentials();
   if (!clientId || !clientSecret) return null;
-  const res = await fetch(`${apiBase()}/v1/oauth2/token`, {
+  const res = await fetch(`${apiBase}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
@@ -83,7 +71,8 @@ export default async function handler(req, res) {
   if (webhookId) {
     const accessToken = await getAccessToken();
     if (!accessToken) return res.status(500).json({ error: "PayPal OAuth failed" });
-    const verifyRes = await fetch(`${apiBase()}/v1/notifications/verify-webhook-signature`, {
+    const { apiBase } = paypalCredentials();
+    const verifyRes = await fetch(`${apiBase}/v1/notifications/verify-webhook-signature`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,

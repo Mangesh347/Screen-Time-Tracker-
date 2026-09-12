@@ -1,7 +1,15 @@
 import crypto from "crypto";
-import { computeExpiresAt, quoteINR, getPlan, paymentMode } from "../_lib/pricing.js";
+import {
+  computeExpiresAt,
+  quoteINR,
+  getPlan,
+  paymentMode,
+  razorpayCredentials,
+  missingRazorpayEnvVars,
+  allowSimulatedCheckout,
+} from "../_lib/pricing.js";
 import { upsertEntitlement, claimPaymentEvent, markEventProcessed } from "../_lib/entitlement.js";
-import { resolveCheckoutUser } from "../_lib/auth.js";
+import { ensureCheckoutUser } from "../_lib/auth.js";
 import { sbFetch } from "../_lib/supabase.js";
 
 export default async function handler(req, res) {
@@ -13,10 +21,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const mode = paymentMode();
-  const keySecret =
-    mode === "live"
-      ? process.env.RAZORPAY_LIVE_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET
-      : process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+  const creds = razorpayCredentials();
 
   try {
     const body = req.body || {};
@@ -32,27 +37,80 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing payment fields", is_pro: false });
     }
 
-    if (String(razorpay_order_id).startsWith("order_sim_") || String(razorpay_payment_id).startsWith("pay_sim_")) {
-      return res.status(400).json({
-        error: "simulated_not_allowed",
-        message: "Simulated payments are disabled. Complete a real Razorpay test checkout.",
-        is_pro: false,
-        mode,
+    const isSim =
+      String(razorpay_order_id).startsWith("SIM_") ||
+      String(razorpay_order_id).startsWith("order_sim_") ||
+      String(razorpay_payment_id).startsWith("pay_sim_") ||
+      String(razorpay_payment_id).startsWith("SIM_");
+
+    if (isSim) {
+      if (!allowSimulatedCheckout()) {
+        return res.status(400).json({
+          error: "simulated_not_allowed",
+          message: "Simulated payments are disabled. Complete a real Razorpay checkout.",
+          is_pro: false,
+          mode,
+        });
+      }
+
+      const authUser = await ensureCheckoutUser(req, body);
+      if (!authUser?.id) {
+        return res.status(401).json({
+          error: "sign_in_required",
+          message: "Authenticated user or billing email required to activate Pro.",
+          is_pro: false,
+        });
+      }
+
+      const userId = authUser.id;
+      const quote = quoteINR(cycle);
+      const plan = getPlan(cycle);
+      const expiresAt = computeExpiresAt(cycle);
+      const billingEmail = authUser.email || String(email || "").toLowerCase().trim();
+
+      await upsertEntitlement({
+        email: billingEmail,
+        userId,
+        plan: quote.cycle,
+        cycle: quote.cycle,
+        provider: "razorpay_simulated",
+        expiresAt,
+        externalId: razorpay_payment_id,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        amount: quote.total,
+        currency: "INR",
+        webhookVerified: false,
+        metadata: { via: "simulated_preview", mode: "simulated_preview" },
+      });
+
+      return res.status(200).json({
+        success: true,
+        plan: quote.cycle,
+        cycle: quote.cycle,
+        email: billingEmail,
+        user_id: userId,
+        expiresAt,
+        provider: "razorpay",
+        payment_id: razorpay_payment_id,
+        is_pro: true,
+        mode: "simulated_preview",
       });
     }
 
-    if (!keySecret) {
+    const missing = missingRazorpayEnvVars();
+    if (missing.length) {
       return res.status(503).json({
         error: "razorpay_keys_missing",
-        message:
-          "Add RAZORPAY_TEST_KEY_SECRET (and KEY_ID) in Vercel env, set MODE=sandbox, redeploy.",
+        message: `Missing Vercel env: ${missing.join(", ")}. Add them, then redeploy.`,
+        missing_env: missing,
         is_pro: false,
         mode,
       });
     }
 
     const expected = crypto
-      .createHmac("sha256", keySecret)
+      .createHmac("sha256", creds.keySecret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
     const a = Buffer.from(expected);
@@ -61,11 +119,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid payment signature", is_pro: false });
     }
 
-    const authUser = await resolveCheckoutUser(req, body);
+    const authUser = await ensureCheckoutUser(req, body);
     if (!authUser?.id) {
       return res.status(401).json({
         error: "sign_in_required",
-        message: "Authenticated user required to activate Pro.",
+        message: "Authenticated user or billing email required to activate Pro.",
         is_pro: false,
       });
     }
@@ -74,7 +132,16 @@ export default async function handler(req, res) {
     const sess = await sbFetch(
       `/rest/v1/stt_checkout_sessions?user_id=eq.${encodeURIComponent(userId)}&order_id=eq.${encodeURIComponent(razorpay_order_id)}&select=*&limit=1`,
     );
-    const session = sess.data?.[0];
+    let session = sess.data?.[0];
+    if (!session) {
+      const billingLookup = authUser.email || String(email || "").toLowerCase().trim();
+      if (billingLookup) {
+        const byEmail = await sbFetch(
+          `/rest/v1/stt_checkout_sessions?email=eq.${encodeURIComponent(billingLookup)}&order_id=eq.${encodeURIComponent(razorpay_order_id)}&select=*&limit=1`,
+        );
+        session = byEmail.data?.[0];
+      }
+    }
     if (!session) {
       return res.status(403).json({
         error: "Checkout session not found for this user",

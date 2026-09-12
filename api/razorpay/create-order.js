@@ -1,6 +1,14 @@
 import Razorpay from "razorpay";
-import { quoteINR, computeExpiresAt, paymentMode, getPlan } from "../_lib/pricing.js";
-import { resolveCheckoutUser } from "../_lib/auth.js";
+import {
+  quoteINR,
+  computeExpiresAt,
+  paymentMode,
+  getPlan,
+  razorpayCredentials,
+  missingRazorpayEnvVars,
+  allowSimulatedCheckout,
+} from "../_lib/pricing.js";
+import { ensureCheckoutUser } from "../_lib/auth.js";
 import { sbFetch } from "../_lib/supabase.js";
 
 export default async function handler(req, res) {
@@ -12,32 +20,37 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const mode = paymentMode();
-  const keyId =
-    mode === "live"
-      ? process.env.RAZORPAY_LIVE_KEY_ID || process.env.RAZORPAY_KEY_ID
-      : process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID;
-  const keySecret =
-    mode === "live"
-      ? process.env.RAZORPAY_LIVE_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET
-      : process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+  const creds = razorpayCredentials();
 
   try {
     const body = req.body || {};
     const { cycle = "yearly", email = "" } = body;
-    const authUser = await resolveCheckoutUser(req, body);
+    const authUser = await ensureCheckoutUser(req, body);
     const plan = getPlan(cycle);
     const quote = quoteINR(cycle);
     const receiptId = `stt_${quote.cycle}_${Date.now()}`.slice(0, 40);
 
+    const billingEmail =
+      authUser?.email || String(email || "").toLowerCase().trim();
+
+    if (!billingEmail || !billingEmail.includes("@")) {
+      return res.status(400).json({
+        error: "email_required",
+        message: "Enter a billing email for Pro activation.",
+        mode,
+      });
+    }
+
     if (!authUser?.id) {
       return res.status(401).json({
         error: "sign_in_required",
-        message: "Sign in to Screen Time Tracker first, then open checkout from the extension (Pro tab).",
+        message:
+          "Could not resolve a Screen Time Tracker account for this email. Sign in from the extension, or use the same Gmail you will use in the app.",
+        mode,
       });
     }
 
     const userId = authUser.id;
-    const billingEmail = authUser.email || String(email || "").toLowerCase().trim();
 
     const sessionRow = {
       user_id: userId,
@@ -52,16 +65,43 @@ export default async function handler(req, res) {
       metadata: { mode, receipt: receiptId },
     };
 
-    if (!keyId || !keySecret || String(keyId).includes("placeholder")) {
+    const missing = missingRazorpayEnvVars();
+    if (missing.length) {
+      if (allowSimulatedCheckout()) {
+        const orderId = `SIM_RZP_${Date.now()}`;
+        await sbFetch(`/rest/v1/stt_checkout_sessions`, {
+          method: "POST",
+          body: {
+            ...sessionRow,
+            order_id: orderId,
+            metadata: { ...sessionRow.metadata, mode: "simulated_preview", missing },
+          },
+        }).catch(() => {});
+        return res.status(200).json({
+          success: true,
+          order_id: orderId,
+          amount: quote.amountPaise,
+          currency: "INR",
+          receipt: receiptId,
+          key_id: creds.keyId || "rzp_test_sim",
+          quote,
+          mode: "simulated_preview",
+          payment_mode: mode,
+          missing_env: missing,
+          user_id: userId,
+          message:
+            "Simulated Razorpay preview — no charge. Verify will not unlock Pro unless ALLOW_SIMULATED_CHECKOUT and SIM_ order.",
+        });
+      }
       return res.status(503).json({
         error: "razorpay_keys_missing",
-        message:
-          "Add RAZORPAY_TEST_KEY_ID + RAZORPAY_TEST_KEY_SECRET in Vercel env (test mode keys start with rzp_test_), set MODE=sandbox, redeploy.",
+        message: `Missing Vercel env: ${missing.join(", ")}. Add them, then redeploy.`,
+        missing_env: missing,
         mode,
       });
     }
 
-    const rzp = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const rzp = new Razorpay({ key_id: creds.keyId, key_secret: creds.keySecret });
     const order = await rzp.orders.create({
       amount: quote.amountPaise,
       currency: "INR",
@@ -85,7 +125,7 @@ export default async function handler(req, res) {
       amount: order.amount,
       currency: order.currency,
       receipt: order.receipt,
-      key_id: keyId,
+      key_id: creds.keyId,
       quote,
       mode,
       user_id: userId,
