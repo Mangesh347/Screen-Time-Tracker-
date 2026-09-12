@@ -3,11 +3,40 @@
 Your Supabase: `https://mproxhlssrniwlcywfhq.supabase.co`  
 Google Web Client ID: `179379728844-5tq61kd6dj85mulki8oftakk37je16jr.apps.googleusercontent.com`
 
+## Leaderboard not listing members?
+
+If the board shows only you, check this URL in a browser:
+
+`https://screen-time-tracker-seven.vercel.app/api/stt/leaderboard?limit=5`
+
+| Response | Meaning |
+|----------|---------|
+| **404** | API not deployed — redeploy this `website/` folder (env key alone cannot fix a missing route) |
+| `{"error":"SUPABASE_SERVICE_ROLE_KEY missing..."}` | Add exact name `SUPABASE_SERVICE_ROLE_KEY` on **this** Vercel project → Redeploy |
+| `{"users":[...],"source":"supabase-service-role"}` | Working — refresh Leaderboard in the extension |
+
+`/api/stt/access` can work while `/api/stt/leaderboard` 404s — they are separate functions. `vercel.json` must rewrite all of them (access, leaderboard, sync-profile, guest-score).
+
+Redeploy from this folder:
+
+```bash
+cd "C:\Extension\WEB SCREEN TIME (LATEST)\Screen_Time_Tracker\website"
+npx vercel login
+npx vercel --prod
+```
+
 ## 1) Supabase SQL (required)
 
-SQL Editor → paste and run:
+SQL Editor → paste and run **in order**:
 
-`../supabase/schema.sql`
+1. `../supabase/schema.sql` (base tables, if not already applied)
+2. `../supabase/schema-v5.sql` (usage days, social, notifications, guest scores)
+3. If you see missing-column errors: `../supabase/fix-profiles.sql` then wait a few seconds (or run `notify pgrst, 'reload schema';`)
+4. **Leaderboard real stats (required for Global/Today non-zero peers):**  
+   `supabase/migrations/20260912_global_leaderboard_real_stats.sql`  
+   (same file also at `../supabase/migrations/20260912_global_leaderboard_real_stats.sql` in the extension tree)
+
+Also enable **Email** provider (Auth → Providers → Email) for password sign-up.
 
 ## 2) Supabase Auth → Google
 
