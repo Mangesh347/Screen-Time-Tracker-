@@ -471,6 +471,18 @@ export default async function handler(req, res) {
 
     if (lastErr) console.warn('[stt/leaderboard] select warning', lastErr);
 
+    // Drop empty profile shells (Auth placeholders with no synced activity).
+    // Domain mode already requires site_sec > 0 above.
+    if (!domain) {
+      users = users.filter((u) => {
+        const browse = Number(u._period_browse) || 0;
+        const score = Number(u._period_score) || Number(u.public_score) || 0;
+        const streak = Number(u.streak_days) || 0;
+        const total = Number(u.total_browse_sec) || 0;
+        return browse > 0 || score > 0 || streak > 0 || total > 0;
+      });
+    }
+
     return res.status(200).json({
       users: users.slice(0, limit),
       guests: [],
