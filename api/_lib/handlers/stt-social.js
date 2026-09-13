@@ -28,6 +28,7 @@ import {
   parseBody,
 } from "../social.js";
 import { rateLimit, clientKey } from "../rate-limit.js";
+import { resolveIsPro } from "../gates.js";
 
 async function requireUser(req, res) {
   const { ok: cfgOk } = supabaseConfig();
@@ -248,6 +249,12 @@ async function actionViewPost(me, postId) {
 }
 
 async function actionSendMessage(me, recipientId, body) {
+  const ent = await resolveIsPro(me);
+  if (!ent.isPro) {
+    const err = new Error("Direct messages are Pro — upgrade to chat privately");
+    err.code = "PRO_REQUIRED";
+    throw err;
+  }
   if (!recipientId || recipientId === me.id) throw new Error("Invalid recipient");
   const target = await getProfile(recipientId, "id,is_private,name,handle");
   if (!target) throw new Error("Profile not found");
@@ -645,6 +652,14 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, ...result });
   } catch (e) {
     console.error("[stt/social]", e);
+    if (e?.code === "PRO_REQUIRED") {
+      return res.status(403).json({
+        ok: false,
+        code: "PRO_REQUIRED",
+        feature: "messaging",
+        error: userFacingError(e.message, "Direct messages are Pro"),
+      });
+    }
     return res.status(400).json({ error: userFacingError(e.message, "Request failed") });
   }
 }

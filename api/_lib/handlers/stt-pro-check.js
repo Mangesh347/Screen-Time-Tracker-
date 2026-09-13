@@ -19,7 +19,9 @@ const PRO_FEATURES = new Set([
   "history90",
   "cleanerDeep",
   "visualThemesAll",
-  "petDesktop",
+  "messaging",
+  "history30",
+  "history90",
 ]);
 
 export default async function handler(req, res) {

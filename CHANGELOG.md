@@ -1,5 +1,11 @@
 # Website changelog
 
+## 1.2.8 — 2026-09-13
+- Social API: reject `send_message` for non-Pro (`PRO_REQUIRED` / 403) via `resolveIsPro`
+- `/api/stt/pro-check`: add `messaging`, `history30`, `history90`; remove `petDesktop`
+- Marketing `index.html`: Free vs Pro — Messaging Pro; Today+7d Free / 30+90 Pro; community feed Free; no Pet
+- Pair with extension **5.4.42** — redeploy Vercel
+
 ## 1.2.7 — 2026-09-13
 - **Vercel Hobby fix**: consolidate 16 serverless functions → **6** (Hobby max 12)
 - Catch-all routers: `/api/stt/[...path]`, `/api/paypal/[...path]`, `/api/razorpay/[...path]`, `/api/webhooks/[...path]`
