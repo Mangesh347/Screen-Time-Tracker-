@@ -291,7 +291,20 @@
         }
         if (banner) {
           banner.classList.add("on");
-          if (paymentMode === "live") {
+          const ready = data.ready !== false && (providers.paypal || providers.razorpay);
+          if (!ready) {
+            banner.classList.add("ck-practice");
+            banner.classList.remove("ck-trust");
+            banner.textContent =
+              "Payment keys incomplete on server (need Client ID/Secret or Key ID/Secret for " +
+              (paymentMode === "live" ? "live" : "sandbox") +
+              "). Add them on Vercel, then redeploy.";
+          } else if (data.key_mode_mismatch) {
+            banner.classList.add("ck-practice");
+            banner.textContent =
+              "Warning: Razorpay key prefix does not match " + modeLabel() +
+              " mode — check PAYMENT_TEST_MODE and RAZORPAY_TEST_* / LIVE_* on Vercel.";
+          } else if (paymentMode === "live") {
             banner.classList.add("ck-trust");
             banner.classList.remove("ck-practice");
             banner.textContent = "Live checkout — real charges. Pro unlocks on your billing email.";

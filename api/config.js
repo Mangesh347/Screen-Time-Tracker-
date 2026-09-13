@@ -27,6 +27,13 @@ export default function handler(req, res) {
   const rz = razorpayCredentials();
   const { plans, inrUsdRate } = publicPlans();
 
+  const paypalReady = Boolean(pp.clientId && pp.clientSecret);
+  const razorpayReady = Boolean(rz.keyId && rz.keySecret);
+  const rzKeyLooksTest = /^rzp_test_/i.test(rz.keyId || "");
+  const rzKeyLooksLive = /^rzp_live_/i.test(rz.keyId || "");
+  const keyModeMismatch =
+    (mode === "sandbox" && rzKeyLooksLive) || (mode === "live" && rzKeyLooksTest);
+
   return res.status(200).json({
     paymentMode: mode,
     payment_mode: mode,
@@ -36,8 +43,8 @@ export default function handler(req, res) {
     gstRate: GST_RATE,
     plans,
     providers: {
-      paypal: Boolean(pp.clientId && pp.clientSecret),
-      razorpay: Boolean(rz.keyId && rz.keySecret),
+      paypal: paypalReady,
+      razorpay: razorpayReady,
     },
     // Public key ids only (safe for Checkout.js / PayPal SDK) — never secrets
     paypal_client_id: pp.clientId || "",
@@ -47,5 +54,8 @@ export default function handler(req, res) {
     company_name: "Screen Time Tracker — Fenwick Labs",
     support_email: "support@fenwicklabs.com",
     checkout_url: `${siteUrl()}/checkout.html`,
+    // Ops hints (no secrets) — checkout needs both id + secret for the active mode
+    ready: paypalReady || razorpayReady,
+    key_mode_mismatch: keyModeMismatch,
   });
 }

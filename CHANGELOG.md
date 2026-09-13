@@ -1,5 +1,11 @@
 # Website changelog
 
+## 1.2.6 — 2026-09-13
+- Payment audit: `/api/config` exposes `ready` + `key_mode_mismatch` (no secrets) so checkout banner flags incomplete keys / test-vs-live key mismatch
+- Checkout banner warns when PayPal/Razorpay secrets missing for active mode
+- Pair with extension `ext_id` on checkout URLs + Edge `PAYMENT_TEST_MODE` alignment for post-pay Pro deep-link / sandbox routing
+- Redeploy Vercel; set `PAYMENT_TEST_MODE=true` + `PAYPAL_TEST_*` / `RAZORPAY_TEST_*` for sandbox
+
 ## 1.2.5 — 2026-09-13
 - `/api/stt/migrate-guest` — claim guest score into signed-in account (no LB duplicates)
 - `/api/stt/delete-account` — auth-gated product data wipe + profile anonymize
