@@ -22,10 +22,16 @@ SQL Editor → run in order:
 
 1. `../supabase/schema.sql` (if not applied)
 2. `../supabase/schema-v5.sql`
-3. Fix-ups: `../supabase/fix-profiles.sql` if needed
-4. Leaderboard migrations under `supabase/migrations/`
+3. Fix-ups: `../supabase/fix-profiles.sql` / `../supabase/fix-stt-posts.sql` if needed
+4. **Social network**: `../supabase/schema-social-network.sql` (private profiles, follows, posts, likes, comments, DMs)
+5. **Thought views**: `../supabase/schema-post-views.sql` (if posts predate views)
+6. **Live counts + Realtime**: `../supabase/schema-realtime-social.sql` (triggers, backfill, realtime publication — fixes 0-stats)
+7. Leaderboard migrations under `supabase/migrations/`
 
 Enable **Email** provider for password sign-up.
+
+After social SQL: Project Settings → API → Reload schema (or wait ~1 min). Smoke `GET /api/stt/social?action=feed` with a Bearer JWT.
+Optional: Dashboard → Database → Publications → confirm `stt_posts`, `stt_friendships`, `stt_profiles`, `stt_messages` are in `supabase_realtime`.
 
 ## 2) Deploy / redeploy
 

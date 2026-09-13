@@ -91,6 +91,8 @@ export async function createCheckoutUserByEmail(email) {
         body: {
           id: data.id,
           email: e,
+          is_private: true,
+          is_public: false,
           updated_at: new Date().toISOString(),
         },
       }).catch(() => {});

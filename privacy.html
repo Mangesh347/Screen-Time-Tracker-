@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy — Screen Time Tracker</title>
+  <meta name="description" content="Privacy Policy for Screen Time Tracker by Fenwick Labs — local tracking, optional cloud sync, and community features." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
   <script>
@@ -38,9 +39,49 @@
   </header>
   <main class="section">
     <div class="wrap" style="max-width:720px">
-      <h2 style="margin-bottom:16px">Privacy Policy</h2>
-      <p class="muted" style="margin-bottom:12px">Tracking data stays in your browser by default. Optional Google Sign-In uses Supabase Auth. Payments are processed by PayPal or Razorpay — we do not store card numbers. Entitlement (plan status) is stored so Pro can unlock on your billing email.</p>
-      <p class="muted">Fenwick Labs · Mangesh Madhavrao Lokade, sole proprietor · Taroda Bk, Nanded, Maharashtra 431605, India</p>
+      <h2 style="margin-bottom:8px">Privacy Policy</h2>
+      <p class="muted" style="margin-bottom:20px">Last updated: September 13, 2026 · Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor), Taroda Bk, Nanded, Maharashtra 431605, India · Contact: support@fenwicklabs.com</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">1. Local-first tracking</h3>
+      <p class="muted" style="margin-bottom:12px">By default, screen-time usage (sites, durations, categories, limits, and settings) is stored in your browser via Chrome storage on your device. We do not receive browsing history unless you choose optional cloud features below.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">2. Ghost Mode / local-only</h3>
+      <p class="muted" style="margin-bottom:12px">Ghost Mode keeps tracking local and stops optional cloud sync of usage aggregates and guest leaderboard scores. Your local history and settings stay on the device. Turning Ghost Mode off (and signing in) may resume optional sync per your settings and plan.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">3. Optional sign-in</h3>
+      <p class="muted" style="margin-bottom:12px">If you sign in with Google or email (Supabase Auth), we process your account email, display name, and profile photo URL as provided by the identity provider, plus a unique user id. Auth tokens stay in extension storage on your device.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">4. Cloud sync (when signed in)</h3>
+      <p class="muted" style="margin-bottom:12px">Depending on Free/Pro entitlements and settings, we may sync profile basics, focus/guest scores, and (for Pro) fuller usage history to our Supabase database so you can restore data across devices and appear on leaderboards you opt into. You can stop sync by signing out, enabling Ghost Mode, or adjusting sync settings in the extension.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">5. Community &amp; social features</h3>
+      <p class="muted" style="margin-bottom:12px">When signed in and using Community, the following may be stored in the cloud and visible to other members according to your privacy settings:</p>
+      <ul class="muted" style="margin:0 0 12px 1.2rem;line-height:1.55">
+        <li>Public profile fields: handle/name, bio, avatar URL, privacy flag (private/public)</li>
+        <li>Thoughts (posts), likes, comments, and view counts</li>
+        <li>Follow relationships and follow requests</li>
+        <li>Direct messages between users who are allowed to message each other</li>
+        <li>Optional public score / top-site summaries you choose to share for leaderboards</li>
+      </ul>
+      <p class="muted" style="margin-bottom:12px">Profiles default to private (follow requests). Do not post personal data you are not comfortable sharing. We may remove content that violates our Terms.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">6. Payments</h3>
+      <p class="muted" style="margin-bottom:12px">Payments are processed by PayPal or Razorpay. We do not store full card numbers. We store entitlement/plan status tied to your billing email so Pro features unlock correctly. Payment processors have their own privacy policies.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">7. Permissions (Chrome extension)</h3>
+      <p class="muted" style="margin-bottom:12px">The extension requests access needed to measure active tab time, apply focus/block tools on websites you visit, store settings, show notifications, and sign in with Google. Host access is used for on-page focus tools (cleaner, banners) and to call our own APIs (Supabase, Vercel billing/social).</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">8. Security note</h3>
+      <p class="muted" style="margin-bottom:12px">We harden the product against remote abuse and data leaks (no service-role secrets in the client, production logging reduced, CSP, authenticated APIs). Anyone with physical or admin access to your computer can still use Chrome DevTools to inspect extension pages on that machine — that is a browser limitation, not a hidden backdoor.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">9. Data retention &amp; deletion</h3>
+      <p class="muted" style="margin-bottom:12px">Local data is removed when you clear extension storage or uninstall. To delete cloud account data (profile, posts, messages, entitlements), email support@fenwicklabs.com from your account email. We respond within a reasonable period.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">10. Children</h3>
+      <p class="muted" style="margin-bottom:12px">Screen Time Tracker is not directed at children under 13. Do not create accounts for children under the age required by local law without appropriate consent.</p>
+
+      <h3 style="margin:20px 0 8px;font-size:1.05rem">11. Changes</h3>
+      <p class="muted" style="margin-bottom:12px">We may update this policy as features change. Material updates will be reflected on this page with a new “Last updated” date.</p>
     </div>
   </main>
   <script src="site-theme.js" defer></script>

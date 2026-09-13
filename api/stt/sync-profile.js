@@ -76,7 +76,6 @@ export default async function handler(req, res) {
       name,
       picture,
       handle,
-      is_public: true,
       updated_at: new Date().toISOString(),
       last_active_at: new Date().toISOString(),
       region: regionVal,
@@ -94,6 +93,12 @@ export default async function handler(req, res) {
       period_stats: body.period_stats && typeof body.period_stats === 'object' ? body.period_stats : undefined,
       public_top_sites: Array.isArray(body.public_top_sites) ? body.public_top_sites.slice(0, 12) : undefined,
     });
+
+    // Privacy only on first insert — never flip existing public/private from score sync
+    const insertOnlyPrivacy = {
+      is_private: true,
+      is_public: false,
+    };
 
     const attempts = [
       row,
@@ -114,7 +119,6 @@ export default async function handler(req, res) {
         name: row.name,
         picture: row.picture,
         handle: row.handle,
-        is_public: true,
         total_browse_sec: row.total_browse_sec,
         total_focus_sec: row.total_focus_sec,
         public_score: row.public_score,
@@ -135,6 +139,21 @@ export default async function handler(req, res) {
         updated_at: row.updated_at,
       }),
     ];
+
+    // Ensure row exists with private default if brand-new (ignore conflict)
+    await sbFetch('/rest/v1/stt_profiles?on_conflict=id', {
+      method: 'POST',
+      prefer: 'resolution=ignore-duplicates,return=minimal',
+      body: stripUndefined({
+        id: u.id,
+        email: u.email || null,
+        name,
+        picture,
+        handle,
+        ...insertOnlyPrivacy,
+        updated_at: new Date().toISOString(),
+      }),
+    }).catch(() => {});
 
     let result = null;
     for (const payload of attempts) {

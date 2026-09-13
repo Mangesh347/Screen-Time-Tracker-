@@ -1,5 +1,6 @@
 // POST guest leaderboard score (service role)
 import { sbFetch } from '../_lib/supabase.js';
+import { rateLimit, clientKey } from '../_lib/rate-limit.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,6 +9,12 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const rl = rateLimit(clientKey(req, 'guest-score'), { limit: 30, windowMs: 60_000 });
+  if (!rl.ok) {
+    res.setHeader('Retry-After', String(rl.retryAfter));
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const device_id = String(body.device_id || '').slice(0, 80);
@@ -15,7 +22,7 @@ export default async function handler(req, res) {
 
     const row = {
       device_id,
-      display_name: String(body.display_name || 'Guest').slice(0, 40),
+      display_name: String(body.display_name || 'Guest').replace(/[<>]/g, '').slice(0, 40),
       region: String(body.region || 'global').slice(0, 32),
       total_sec: Math.max(0, Math.min(86400 * 30, Number(body.total_sec) || 0)),
       focus_sec: Math.max(0, Math.min(86400 * 30, Number(body.focus_sec) || 0)),
@@ -30,10 +37,10 @@ export default async function handler(req, res) {
       body: row,
     });
     if (!r.ok && r.status !== 201 && r.status !== 200) {
-      return res.status(502).json({ error: 'Upsert failed', detail: r.data });
+      return res.status(502).json({ error: 'Upsert failed' });
     }
     return res.status(200).json({ ok: true });
-  } catch (e) {
-    return res.status(500).json({ error: e.message || 'Server error' });
+  } catch {
+    return res.status(500).json({ error: 'Server error' });
   }
 }
