@@ -1,5 +1,11 @@
 # Website changelog
 
+## 1.2.5 — 2026-09-13
+- `/api/stt/migrate-guest` — claim guest score into signed-in account (no LB duplicates)
+- `/api/stt/delete-account` — auth-gated product data wipe + profile anonymize
+- `/api/stt/pro-check` + `api/_lib/gates.js` (`requireAuth` / `requirePro`)
+- Pair with extension **5.4.38** — redeploy Vercel
+
 ## 1.2.4 — 2026-09-13
 - Security headers in `vercel.json` (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, nosniff)
 - Rate limits: `/api/stt/social` (120/min), `/api/stt/guest-score` (30/min)
