@@ -1,19 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-visual="material" data-mode="light" data-theme="auto" data-m3="expressive">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy — Screen Time Tracker</title>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      try {
+        var v = localStorage.getItem("stt_site_visual") || "material";
+        if (v !== "editorial" && v !== "minimal") v = "material";
+        var m = localStorage.getItem("stt_site_mode") || "system";
+        var tone = m === "dark" || m === "light" ? m :
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-visual", v);
+        document.documentElement.setAttribute("data-mode", tone);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="theme-tokens.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="site-header">
     <div class="wrap header-inner">
       <a class="brand" href="/"><img class="brand-mark" src="/brand-mark.png" width="28" height="28" alt="" /><span>Screen Time Tracker</span></a>
+      <div class="header-actions">
+        <div class="visual-theme-bar" role="group" aria-label="Visual theme">
+          <button type="button" class="visual-chip" data-visual-set="material" aria-pressed="false">Material</button>
+          <button type="button" class="visual-chip" data-visual-set="editorial" aria-pressed="false">Editorial</button>
+          <button type="button" class="visual-chip" data-visual-set="minimal" aria-pressed="false">Minimal</button>
+        </div>
+        <button type="button" class="mode-toggle" data-mode-toggle aria-label="Toggle dark mode">☾</button>
+      </div>
     </div>
   </header>
   <main class="section">
@@ -23,5 +43,6 @@
       <p class="muted">Fenwick Labs · Mangesh Madhavrao Lokade, sole proprietor · Taroda Bk, Nanded, Maharashtra 431605, India</p>
     </div>
   </main>
+  <script src="site-theme.js" defer></script>
 </body>
 </html>

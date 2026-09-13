@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-visual="material" data-mode="light" data-theme="auto" data-m3="expressive">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,23 +7,23 @@
   <meta name="description" content="Upgrade to Screen Time Tracker Pro. Secure checkout from $4.99/mo." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      try {
+        var v = localStorage.getItem("stt_site_visual") || "material";
+        if (v !== "editorial" && v !== "minimal") v = "material";
+        var m = localStorage.getItem("stt_site_mode") || "system";
+        var tone = m === "dark" || m === "light" ? m :
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-visual", v);
+        document.documentElement.setAttribute("data-mode", tone);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="theme-tokens.css" />
   <link rel="stylesheet" href="checkout.css" />
   <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
-  <style>
-    /* STT checkout accent — distinct from CE; keeps layout shell */
-    .ck-body { font-family: "DM Sans", system-ui, sans-serif; }
-    .ck-brand, .ck-price-hero, .ck-right h1 { font-family: Fraunces, Georgia, serif; }
-    .ck-brand-mark { background: #0a0a0a; padding: 0; overflow: hidden; }
-    .ck-brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .ck-product-ico { background: #0a0a0a; padding: 0; overflow: hidden; }
-    .ck-product-ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .ck-btn-dark { background: #0f766e; }
-    .ck-btn-dark:hover { background: #0d9488; }
-    .ck-plan-pills button.active { border-color: #0f766e; box-shadow: 0 0 0 1px #0f766e; }
-  </style>
+  <script src="site-theme.js" defer></script>
 </head>
 <body class="ck-body">
   <div class="ck-shell" id="checkoutShell">
@@ -73,6 +73,12 @@
     </aside>
 
     <main class="ck-right" aria-label="Payment">
+      <div class="ck-theme-bar" role="group" aria-label="Visual theme">
+        <button type="button" class="visual-chip" data-visual-set="material" aria-pressed="false">Material</button>
+        <button type="button" class="visual-chip" data-visual-set="editorial" aria-pressed="false">Editorial</button>
+        <button type="button" class="visual-chip" data-visual-set="minimal" aria-pressed="false">Minimal</button>
+        <button type="button" class="mode-toggle" data-mode-toggle aria-label="Toggle dark mode">☾</button>
+      </div>
       <h1>Payment details</h1>
 
       <div class="ck-express">
@@ -397,7 +403,7 @@
           description: data.quote?.desc || "Pro",
           order_id: data.order_id,
           prefill: { email: e },
-          theme: { color: "#0f766e" },
+          theme: { color: "#6750a4" },
           handler: async function (response) {
             setStatus("Verifying payment…");
             try {

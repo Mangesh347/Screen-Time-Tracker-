@@ -1,12 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-visual="material" data-mode="light" data-theme="auto" data-m3="expressive">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>You're Pro — Screen Time Tracker</title>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      try {
+        var v = localStorage.getItem("stt_site_visual") || "material";
+        if (v !== "editorial" && v !== "minimal") v = "material";
+        var m = localStorage.getItem("stt_site_mode") || "system";
+        var tone = m === "dark" || m === "light" ? m :
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-visual", v);
+        document.documentElement.setAttribute("data-mode", tone);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="/theme-tokens.css" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -18,6 +31,7 @@
     <p class="lede" id="hint" style="font-size:14px;opacity:.8;margin-top:8px">If the extension doesn’t open, click the button below.</p>
     <a class="btn" id="openExt" href="/">Open dashboard</a>
   </div>
+  <script src="/site-theme.js" defer></script>
   <script>
     const p = new URLSearchParams(location.search);
     const email = p.get('email') || '';
@@ -36,7 +50,6 @@
     if (dashUrl) {
       btn.href = dashUrl;
       btn.textContent = 'Open Pro dashboard';
-      // Auto-redirect (pages/* are web_accessible)
       setTimeout(function () {
         try { location.href = dashUrl; } catch (e) {}
       }, 600);

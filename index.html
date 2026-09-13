@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-visual="material" data-mode="light" data-theme="auto" data-m3="expressive">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,9 +14,20 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:image" content="/og-image.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      try {
+        var v = localStorage.getItem("stt_site_visual") || "material";
+        if (v !== "editorial" && v !== "minimal") v = "material";
+        var m = localStorage.getItem("stt_site_mode") || "system";
+        var tone = m === "dark" || m === "light" ? m :
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-visual", v);
+        document.documentElement.setAttribute("data-mode", tone);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="theme-tokens.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -34,7 +45,15 @@
         <a href="#faq">FAQ</a>
         <a href="support.html">Support</a>
       </nav>
-      <a class="btn btn-white" href="checkout.html?cycle=yearly">Upgrade to Pro</a>
+      <div class="header-actions">
+        <div class="visual-theme-bar" role="group" aria-label="Visual theme">
+          <button type="button" class="visual-chip on" data-visual-set="material" aria-pressed="true">Material</button>
+          <button type="button" class="visual-chip" data-visual-set="editorial" aria-pressed="false">Editorial</button>
+          <button type="button" class="visual-chip" data-visual-set="minimal" aria-pressed="false">Minimal</button>
+        </div>
+        <button type="button" class="mode-toggle" data-mode-toggle aria-label="Toggle dark mode">☾</button>
+        <a class="btn btn-white" href="checkout.html?cycle=yearly">Upgrade to Pro</a>
+      </div>
     </div>
   </header>
 
@@ -309,12 +328,13 @@
       <div class="footer-bottom">
         <span>© <span id="year"></span> Screen Time Tracker · Fenwick Labs</span>
         <div class="pay-logos" aria-label="Payment providers">
-          <svg viewBox="0 0 100 32" role="img" aria-label="PayPal"><title>PayPal</title><text x="0" y="22" font-family="Inter,Arial,sans-serif" font-weight="700" font-size="20" fill="#ffffff">PayPal</text></svg>
-          <svg viewBox="0 0 110 32" role="img" aria-label="Razorpay"><title>Razorpay</title><text x="0" y="22" font-family="Inter,Arial,sans-serif" font-weight="700" font-size="20" fill="#ffffff">Razorpay</text></svg>
+          <svg viewBox="0 0 100 32" role="img" aria-label="PayPal"><title>PayPal</title><text x="0" y="22" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="20" fill="currentColor">PayPal</text></svg>
+          <svg viewBox="0 0 110 32" role="img" aria-label="Razorpay"><title>Razorpay</title><text x="0" y="22" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="20" fill="currentColor">Razorpay</text></svg>
         </div>
       </div>
     </div>
   </footer>
   <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+  <script src="site-theme.js" defer></script>
 </body>
 </html>
