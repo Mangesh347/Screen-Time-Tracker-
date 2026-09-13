@@ -8,9 +8,9 @@
  *   usage_today_sec, usage_week_sec, usage_month_sec, usage_year_sec,
  *   period_stats, public_top_sites, streaks
  *
- * Fallbacks drop columns gradually — never wipe usage/score on a single unknown-column error.
+ * Fallbacks drop columns gradually - never wipe usage/score on a single unknown-column error.
  */
-import { sbFetch, supabaseConfig } from '../_lib/supabase.js';
+import { sbFetch, supabaseConfig } from "../supabase.js';
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
       public_top_sites: Array.isArray(body.public_top_sites) ? body.public_top_sites.slice(0, 12) : undefined,
     });
 
-    // Privacy only on first insert — never flip existing public/private from score sync
+    // Privacy only on first insert - never flip existing public/private from score sync
     const insertOnlyPrivacy = {
       is_private: true,
       is_public: false,

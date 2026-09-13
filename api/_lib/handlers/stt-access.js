@@ -1,6 +1,6 @@
 /**
  * GET /api/stt/access
- * Prefer Authorization Bearer → user_id entitlement.
+ * Prefer Authorization Bearer â†’ user_id entitlement.
  * Returns { plan, is_pro, expires_at, provider } (+ legacy pro/expiresAt aliases).
  */
 import {
@@ -9,8 +9,8 @@ import {
   normalizeEmail,
   computeIsPro,
   demoteEntitlement,
-} from "../_lib/entitlement.js";
-import { userFromAuthHeader } from "../_lib/auth.js";
+} from "../entitlement.js";
+import { userFromAuthHeader } from "../auth.js";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       // If row exists but expired, demote
       if (!row) {
         // Check raw expired row to demote
-        const { sbFetch } = await import("../_lib/supabase.js");
+        const { sbFetch } = await import("../supabase.js");
         const raw = await sbFetch(
           `/rest/v1/stt_entitlements?user_id=eq.${encodeURIComponent(authUser.id)}&select=*&limit=1`,
         );
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      // Legacy email query — read-only; does not prove ownership for upgrades
+      // Legacy email query - read-only; does not prove ownership for upgrades
       const email = normalizeEmail(req.query?.email || "");
       if (email) row = await findEntitlementByEmail(email);
     }

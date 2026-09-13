@@ -1,5 +1,11 @@
 # Website changelog
 
+## 1.2.7 — 2026-09-13
+- **Vercel Hobby fix**: consolidate 16 serverless functions → **6** (Hobby max 12)
+- Catch-all routers: `/api/stt/[...path]`, `/api/paypal/[...path]`, `/api/razorpay/[...path]`, `/api/webhooks/[...path]`
+- Handlers moved to `api/_lib/handlers/` (not counted as functions); public URLs unchanged
+- Kept: `/api/config`, `/api/cron/expire-subscriptions`
+
 ## 1.2.6 — 2026-09-13
 - Payment audit: `/api/config` exposes `ready` + `key_mode_mismatch` (no secrets) so checkout banner flags incomplete keys / test-vs-live key mismatch
 - Checkout banner warns when PayPal/Razorpay secrets missing for active mode

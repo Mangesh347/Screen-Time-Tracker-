@@ -9,14 +9,14 @@
  * Never invent fake brand shells (File Forge / Clixy).
  *
  * Ranking:
- *  - Global / Region: period usage → score → streak
+ *  - Global / Region: period usage â†’ score â†’ streak
  *  - Website: time on that domain (members who used it only)
  *
- * Period columns of 0 fall through to period_stats → totals →
- * stt_usage_days rebuild → stt_sync.screentime last resort.
+ * Period columns of 0 fall through to period_stats â†’ totals â†’
+ * stt_usage_days rebuild â†’ stt_sync.screentime last resort.
  * sanitizeSec rejects ms-as-sec / runaway counters.
  */
-import { sbFetch, supabaseConfig } from '../_lib/supabase.js';
+import { sbFetch, supabaseConfig } from "../supabase.js';
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -95,8 +95,8 @@ function daysAgoIso(n) {
 }
 
 /**
- * Prefer real period usage — never treat explicit 0 as blocking a richer fallback.
- * Order: positive flat → period_stats.browse → total_browse_sec (legacy week/today) → flat 0
+ * Prefer real period usage - never treat explicit 0 as blocking a richer fallback.
+ * Order: positive flat â†’ period_stats.browse â†’ total_browse_sec (legacy week/today) â†’ flat 0
  */
 function periodBrowse(p, period) {
   const flat = {

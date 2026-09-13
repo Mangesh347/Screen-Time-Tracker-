@@ -13,8 +13,8 @@
  * GET ?action=
  *   feed | profile | requests | followers | following | thread | inbox | comments | can_message
  */
-import { supabaseConfig, sbFetch } from "../_lib/supabase.js";
-import { userFromAuthHeader } from "../_lib/auth.js";
+import { supabaseConfig, sbFetch } from "../supabase.js";
+import { userFromAuthHeader } from "../auth.js";
 import {
   corsSocial,
   userFacingError,
@@ -26,8 +26,8 @@ import {
   reconcileProfileCounts,
   notify,
   parseBody,
-} from "../_lib/social.js";
-import { rateLimit, clientKey } from "../_lib/rate-limit.js";
+} from "../social.js";
+import { rateLimit, clientKey } from "../rate-limit.js";
 
 async function requireUser(req, res) {
   const { ok: cfgOk } = supabaseConfig();
@@ -47,7 +47,7 @@ async function actionFollow(me, targetId) {
   if (!targetId || targetId === me.id) throw new Error("Cannot follow yourself");
   const target = await getProfile(targetId, "id,is_private,handle,name");
   if (!target) throw new Error("Profile not found");
-  // Private-by-default: null/undefined is_private → pending request
+  // Private-by-default: null/undefined is_private â†’ pending request
   const status = target.is_private === false ? "accepted" : "pending";
   const r = await sbFetch("/rest/v1/stt_friendships?on_conflict=user_id,friend_id", {
     method: "POST",
@@ -343,7 +343,7 @@ async function getFeed(me, limit = 40) {
 async function getProfileView(me, targetId) {
   let profile = await getProfile(targetId);
   if (!profile) throw new Error("Profile not found");
-  // Always reconcile counts from friendships/posts — fixes stale 0-stats
+  // Always reconcile counts from friendships/posts - fixes stale 0-stats
   profile = await reconcileProfileCounts(profile);
   const rel = await getFollowRelation(me.id, targetId);
   const isSelf = me.id === targetId;

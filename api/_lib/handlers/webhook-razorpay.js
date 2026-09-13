@@ -1,5 +1,5 @@
 /**
- * POST /api/webhooks/razorpay — verify signature, grant/demote Pro (idempotent)
+ * POST /api/webhooks/razorpay - verify signature, grant/demote Pro (idempotent)
  */
 import crypto from "crypto";
 import {
@@ -7,9 +7,9 @@ import {
   markEventProcessed,
   upsertEntitlement,
   demoteEntitlement,
-} from "../_lib/entitlement.js";
-import { computeExpiresAt, getPlan } from "../_lib/pricing.js";
-import { sbFetch } from "../_lib/supabase.js";
+} from "../entitlement.js";
+import { computeExpiresAt, getPlan } from "../pricing.js";
+import { sbFetch } from "../supabase.js";
 
 export const config = { api: { bodyParser: false } };
 

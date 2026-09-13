@@ -2,7 +2,7 @@
  * GET /api/stt/pro-check?feature=cloudSync
  * Server-side Pro gate probe for clients / future Pro APIs.
  */
-import { requireAuth, resolveIsPro } from "../_lib/gates.js";
+import { requireAuth, resolveIsPro } from "../gates.js";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

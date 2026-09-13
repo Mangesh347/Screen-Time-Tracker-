@@ -2,11 +2,11 @@
  * POST /api/stt/delete-account
  * Authenticated soft-delete of product data bound to the user.
  * Does not destroy Auth user by default (Supabase dashboard / Auth admin).
- * Cloud is source of truth until this runs — logout alone never deletes.
+ * Cloud is source of truth until this runs - logout alone never deletes.
  */
-import { sbFetch, supabaseConfig } from "../_lib/supabase.js";
-import { requireAuth } from "../_lib/gates.js";
-import { rateLimit, clientKey } from "../_lib/rate-limit.js";
+import { sbFetch, supabaseConfig } from "../supabase.js";
+import { requireAuth } from "../gates.js";
+import { rateLimit, clientKey } from "../rate-limit.js";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

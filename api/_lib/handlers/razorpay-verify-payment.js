@@ -7,10 +7,10 @@ import {
   razorpayCredentials,
   missingRazorpayEnvVars,
   allowSimulatedCheckout,
-} from "../_lib/pricing.js";
-import { upsertEntitlement, claimPaymentEvent, markEventProcessed } from "../_lib/entitlement.js";
-import { ensureCheckoutUser } from "../_lib/auth.js";
-import { sbFetch } from "../_lib/supabase.js";
+} from "../pricing.js";
+import { upsertEntitlement, claimPaymentEvent, markEventProcessed } from "../entitlement.js";
+import { ensureCheckoutUser } from "../auth.js";
+import { sbFetch } from "../supabase.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

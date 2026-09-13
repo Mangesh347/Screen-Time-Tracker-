@@ -3,9 +3,9 @@
  * Claim guest leaderboard score into the signed-in account (no duplicates).
  * Body: { device_id }
  */
-import { sbFetch, supabaseConfig } from "../_lib/supabase.js";
-import { requireAuth } from "../_lib/gates.js";
-import { rateLimit, clientKey } from "../_lib/rate-limit.js";
+import { sbFetch, supabaseConfig } from "../supabase.js";
+import { requireAuth } from "../gates.js";
+import { rateLimit, clientKey } from "../rate-limit.js";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

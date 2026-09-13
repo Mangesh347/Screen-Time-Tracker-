@@ -1,14 +1,14 @@
 /**
- * POST /api/webhooks/paypal — verify with PayPal API, grant/demote (idempotent)
+ * POST /api/webhooks/paypal - verify with PayPal API, grant/demote (idempotent)
  */
 import {
   claimPaymentEvent,
   markEventProcessed,
   upsertEntitlement,
   demoteEntitlement,
-} from "../_lib/entitlement.js";
-import { computeExpiresAt, getPlan, paymentMode, paypalCredentials } from "../_lib/pricing.js";
-import { sbFetch } from "../_lib/supabase.js";
+} from "../entitlement.js";
+import { computeExpiresAt, getPlan, paymentMode, paypalCredentials } from "../pricing.js";
+import { sbFetch } from "../supabase.js";
 
 export const config = { api: { bodyParser: false } };
 

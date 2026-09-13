@@ -1,6 +1,6 @@
 // POST guest leaderboard score (service role)
-import { sbFetch } from '../_lib/supabase.js';
-import { rateLimit, clientKey } from '../_lib/rate-limit.js';
+import { sbFetch } from "../supabase.js';
+import { rateLimit, clientKey } from "../rate-limit.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
