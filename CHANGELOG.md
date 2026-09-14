@@ -1,5 +1,8 @@
 # Website changelog
 
+## 1.2.16 — 2026-09-14
+- **Vercel Hobby cron**: expire-subscriptions schedule `0 * * * *` → `0 3 * * *` (once daily UTC) so Hobby deploy succeeds
+
 ## 1.2.15 — 2026-09-14
 - **Instant dashboard after pay**: checkout pings extension to replace the tab; success page never uses `chrome-extension://` links (fixes live `chrome-extension://invalid/`)
 

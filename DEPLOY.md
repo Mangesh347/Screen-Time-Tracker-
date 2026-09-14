@@ -115,4 +115,4 @@ billingApiUrl: "https://YOUR-PROJECT.vercel.app/api/stt/access",
 | `POST /api/razorpay/create-order` | Start Razorpay |
 | `POST /api/razorpay/verify-payment` | Verify signature → `stt_entitlements` + `expires_at` → redirect |
 | `POST /api/razorpay/claim-payment` | Recover Pro from captured `payment_id` + email |
-| `GET /api/cron/expire-subscriptions` | Hourly: expired Pro → Free (`CRON_SECRET`) |
+| `GET /api/cron/expire-subscriptions` | Daily 03:00 UTC: expired Pro → Free (`CRON_SECRET`; Hobby allows 1×/day) |
