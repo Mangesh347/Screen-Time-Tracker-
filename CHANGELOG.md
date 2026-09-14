@@ -1,5 +1,8 @@
 # Website changelog
 
+## 1.2.20 — 2026-09-14
+- **Success UI**: Material You expressive polish — ambient tonal blobs, circular progress around logo, linear indeterminate bar, staggered entrances, state-colored wavy border, pill buttons with state-layer ripple, success pop / fail shake
+
 ## 1.2.19 — 2026-09-14
 - **PayPal**: return directly to `/success.html` (no checkout hop); `landing_page: BILLING`; sandbox banner warns real PayPal login fails; approve-URL host mismatch guards
 - **Success UI**: Material Design 3 redesign — logo in rounded square (no orbit rings), continuous wavy card border, failed-state copy (“Not confirmed yet” / Retry / Back to checkout)

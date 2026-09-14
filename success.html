@@ -4,17 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-  <meta name="stt-build" content="1.2.19" />
+  <meta name="stt-build" content="1.2.20" />
   <title>Confirming payment — Screen Time Tracker</title>
   <meta name="description" content="Confirming your Screen Time Tracker Pro payment." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/success.css" />
 </head>
 <body class="sx-page" data-sx-state="verifying">
+  <div class="sx-ambient" aria-hidden="true">
+    <span class="sx-blob sx-blob-a"></span>
+    <span class="sx-blob sx-blob-b"></span>
+    <span class="sx-blob sx-blob-c"></span>
+  </div>
+
   <main class="sx-shell">
     <div class="sx-frame">
-      <!-- Continuous smooth wavy border (single path) + flowing highlight -->
       <svg class="sx-wave" viewBox="0 0 400 560" preserveAspectRatio="none" aria-hidden="true">
         <path class="sx-wave-path"
           d="M28,36
@@ -32,13 +39,25 @@
 
       <section class="sx-card" aria-labelledby="sx-title" aria-live="polite">
         <div class="sx-brand">
-          <div class="sx-logo-box">
-            <img src="/brand-mark.png" width="40" height="40" alt="" />
+          <div class="sx-logo-wrap">
+            <svg class="sx-progress" viewBox="0 0 72 72" aria-hidden="true">
+              <circle class="sx-progress-track" cx="36" cy="36" r="30" />
+              <circle class="sx-progress-arc" cx="36" cy="36" r="30" />
+            </svg>
+            <div class="sx-logo-box">
+              <img src="/brand-mark.png" width="36" height="36" alt="" />
+            </div>
+            <span class="sx-check-burst" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
           </div>
           <p class="sx-brand-name">Screen Time Tracker</p>
         </div>
 
         <p class="sx-badge" id="sx-chip">
+          <span class="sx-badge-dot" aria-hidden="true"></span>
           <span id="sx-chip-text">Verifying payment…</span>
         </p>
 
@@ -47,17 +66,36 @@
           Checking with your payment provider. Stay on this page — we’ll unlock Pro when verification succeeds.
         </p>
 
+        <div class="sx-linear" aria-hidden="true">
+          <div class="sx-linear-bar"></div>
+        </div>
+
         <div class="sx-rows" aria-label="Order details">
           <div class="sx-row">
-            <span class="sx-row-label">Plan</span>
+            <div class="sx-row-left">
+              <span class="sx-row-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 11H7v-2h6V7h2v6z"/></svg>
+              </span>
+              <span class="sx-row-label">Plan</span>
+            </div>
             <span class="sx-row-value" id="fact-plan">Yearly</span>
           </div>
           <div class="sx-row">
-            <span class="sx-row-label">Email</span>
+            <div class="sx-row-left">
+              <span class="sx-row-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5L4 8V6l8 5 8-5v2z"/></svg>
+              </span>
+              <span class="sx-row-label">Email</span>
+            </div>
             <span class="sx-row-value" id="fact-email">—</span>
           </div>
           <div class="sx-row">
-            <span class="sx-row-label">Paid with</span>
+            <div class="sx-row-left">
+              <span class="sx-row-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4v2h16V4zm0 4H4v2h16V8zm0 4H4v2h16v-2zm0 4H4v2h16v-2z"/></svg>
+              </span>
+              <span class="sx-row-label">Paid with</span>
+            </div>
             <span class="sx-row-value" id="fact-provider">—</span>
           </div>
         </div>
@@ -79,7 +117,7 @@
   </main>
 
   <script>
-    // Build 1.2.19 — verify on success; Material MD3 UI; restore PayPal session from stt_pp_order
+    // Build 1.2.20 — Material You expressive motion + verify-on-success
     const p = new URLSearchParams(location.search);
     const stored = (() => {
       try { return JSON.parse(sessionStorage.getItem("stt_success_ctx") || "{}"); } catch { return {}; }
@@ -173,6 +211,9 @@
 
     function setState(state, copy) {
       document.body.dataset.sxState = state;
+      document.body.classList.remove("sx-state-flash");
+      void document.body.offsetWidth;
+      document.body.classList.add("sx-state-flash");
       if (copy.chip) chipText.textContent = copy.chip;
       if (copy.title) title.textContent = copy.title;
       if (copy.sub) sub.textContent = copy.sub;
@@ -185,6 +226,13 @@
             ? "Payment not confirmed — Screen Time Tracker"
             : "Confirming payment — Screen Time Tracker";
     }
+
+    // Soft Material state-layer ripple origin on primary button
+    dashBtn.addEventListener("pointerdown", (e) => {
+      const r = dashBtn.getBoundingClientRect();
+      dashBtn.style.setProperty("--sx-rx", ((e.clientX - r.left) / r.width) * 100 + "%");
+      dashBtn.style.setProperty("--sx-ry", ((e.clientY - r.top) / r.height) * 100 + "%");
+    });
 
     function authHeaders() {
       const h = { "Content-Type": "application/json", Accept: "application/json" };
