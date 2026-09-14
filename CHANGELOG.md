@@ -1,5 +1,8 @@
 # Website changelog
 
+## 1.2.23 — 2026-09-14
+- Checkout: remove personal name from legal copy; hide FX price wall; USD/INR filter shows only that currency’s plan labels; PayPal hidden in INR mode
+
 ## 1.2.22 — 2026-09-14
 - Real PayPal + Razorpay logos on checkout and homepage footer; PayPal listed first
 

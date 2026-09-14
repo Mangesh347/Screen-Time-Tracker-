@@ -39,7 +39,6 @@
         <button type="button" class="active" data-currency="USD" id="curUSD">USD</button>
         <button type="button" data-currency="INR" id="curINR">INR</button>
       </div>
-      <p class="ck-fx-note" id="fxNote">$3.99 / mo · $29.99 / yr · $79.99 lifetime. INR uses FX ₹95.12 per USD.</p>
 
       <div class="ck-plan-pills" role="tablist" aria-label="Billing cycle">
         <button type="button" data-cycle="monthly" data-label-usd="Monthly · $3.99" data-label-inr="Monthly · ₹380">Monthly · $3.99</button>
@@ -106,11 +105,11 @@
       <button type="button" class="ck-btn ck-btn-dark" id="payCard">Continue with card / UPI</button>
 
       <p class="ck-status" id="statusMsg" role="status"></p>
-      <p class="ck-legal" style="opacity:.55;font-size:11px;margin-top:8px">Checkout 1.2.22 · pay, verify, then Pro unlocks</p>
+      <p class="ck-legal" style="opacity:.55;font-size:11px;margin-top:8px">Checkout 1.2.23 · pay, verify, then Pro unlocks</p>
 
       <p class="ck-legal">
-        By paying, you let Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor) charge this method for the Pro plan you picked.
-        Monthly and yearly end on their renewal date unless you renew. Lifetime is a one time purchase.
+        By paying, you authorize Fenwick Labs to charge this payment method for the Pro plan you selected.
+        Monthly and yearly plans end on their renewal date unless you renew. Lifetime is a one-time purchase.
         <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="refund.html">Refunds</a>
       </p>
       <div class="ck-powered">
@@ -236,7 +235,10 @@
     function render() {
       const q = quote();
       document.getElementById("heroPrice").textContent = `${money(q.total, currency)} ${q.period}`;
-      document.getElementById("productPrice").textContent = money(q.subtotal, currency);
+      document.getElementById("productPrice").textContent = money(
+        currency === "INR" ? q.total : q.subtotal,
+        currency,
+      );
       document.getElementById("rowSubtotal").textContent = money(q.subtotal, currency);
       document.getElementById("rowGst").textContent = q.taxIncluded ? "Included" : money(q.gst, currency);
       document.getElementById("taxLabel").textContent = q.taxIncluded ? "Taxes" : "GST (18%)";
@@ -250,14 +252,30 @@
       document.getElementById("curUSD").classList.toggle("active", currency === "USD");
       document.getElementById("curINR").classList.toggle("active", currency === "INR");
       document.getElementById("annualHint").textContent =
-        cycle === "yearly" ? "Smart pick · about $2.50 per month" :
-        cycle === "lifetime" ? "Pay once and keep Pro on this email" :
-        "Flexible month to month";
-      const fx = document.getElementById("fxNote");
-      if (fx) {
-        fx.textContent = currency === "INR"
-          ? `INR prices: ₹${INR.monthly.toLocaleString("en-IN")} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} · FX ₹${INR_USD_RATE} per USD · tax included`
-          : `USD $${USD.monthly} / $${USD.yearly} / $${USD.lifetime} · INR ₹${INR.monthly.toLocaleString("en-IN")} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} · FX ₹${INR_USD_RATE}/USD · tax shown below for USD`;
+        currency === "INR"
+          ? (cycle === "yearly"
+              ? "Smart pick for the year"
+              : cycle === "lifetime"
+                ? "Pay once and keep Pro on this email"
+                : "Flexible month to month")
+          : (cycle === "yearly"
+              ? "Smart pick · about $2.50 per month"
+              : cycle === "lifetime"
+                ? "Pay once and keep Pro on this email"
+                : "Flexible month to month");
+
+      // Currency filter: PayPal for USD, Razorpay for INR
+      const payPp = document.getElementById("payPaypal");
+      const payRz = document.getElementById("payRazorpay");
+      const payCard = document.getElementById("payCard");
+      if (currency === "INR") {
+        if (payPp) payPp.style.display = "none";
+        if (payRz) payRz.style.display = "";
+        if (payCard) payCard.style.display = "";
+      } else {
+        if (payPp) payPp.style.display = "";
+        if (payRz) payRz.style.display = "";
+        if (payCard) payCard.style.display = "";
       }
     }
 
