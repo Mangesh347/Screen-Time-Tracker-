@@ -1,0 +1,2 @@
+﻿# Deploy stamp — force Vercel rebuild 2026-09-14T17:03:26.7728107+05:30
+1.2.15-force
