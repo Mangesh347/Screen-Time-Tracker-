@@ -200,11 +200,55 @@ export async function markEventProcessed(provider, eventId, status, error = null
   ).catch(() => {});
 }
 
+function profileAsEntitlement(profile) {
+  if (!profile) return null;
+  return {
+    user_id: profile.id,
+    email: profile.email,
+    plan: profile.plan || "free",
+    cycle: profile.plan || "free",
+    provider: profile.plan_provider || null,
+    status: "active",
+    expires_at: profile.plan_expires_at || null,
+  };
+}
+
+/** Auto-resolve Pro from entitlements, then profile.plan (no manual checks). */
+export async function resolveEntitlement({ userId = null, email = null } = {}) {
+  const billingEmail = normalizeEmail(email);
+  if (userId) {
+    const byUser = await findEntitlementByUserId(userId);
+    if (byUser) return byUser;
+  }
+  if (billingEmail) {
+    const byEmail = await findEntitlementByEmail(billingEmail);
+    if (byEmail) return byEmail;
+  }
+  // Fallback: stt_profiles.plan written by payment fulfill / recover SQL
+  if (userId) {
+    const res = await sbFetch(
+      `/rest/v1/stt_profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,plan,plan_expires_at,plan_provider&limit=1`,
+    ).catch(() => ({ ok: false }));
+    const row = res?.ok && Array.isArray(res.data) ? res.data[0] : null;
+    const mapped = profileAsEntitlement(row);
+    if (computeIsPro(mapped)) return mapped;
+  }
+  if (billingEmail) {
+    const res = await sbFetch(
+      `/rest/v1/stt_profiles?email=eq.${encodeURIComponent(billingEmail)}&select=id,email,plan,plan_expires_at,plan_provider&limit=1`,
+    ).catch(() => ({ ok: false }));
+    const row = res?.ok && Array.isArray(res.data) ? res.data[0] : null;
+    const mapped = profileAsEntitlement(row);
+    if (computeIsPro(mapped)) return mapped;
+  }
+  return null;
+}
+
 export async function findEntitlementByUserId(userId) {
   if (!userId) return null;
   const res = await sbFetch(
     `/rest/v1/stt_entitlements?user_id=eq.${encodeURIComponent(userId)}&select=*&limit=1`,
-  );
+  ).catch(() => ({ ok: false }));
   if (!res.ok) return null;
   const row = Array.isArray(res.data) ? res.data[0] : null;
   if (!computeIsPro(row)) return null;
@@ -216,7 +260,7 @@ export async function findEntitlementByEmail(email) {
   if (!billingEmail) return null;
   const res = await sbFetch(
     `/rest/v1/stt_entitlements?email=eq.${encodeURIComponent(billingEmail)}&select=*&limit=1`,
-  );
+  ).catch(() => ({ ok: false }));
   if (!res.ok) return null;
   const row = Array.isArray(res.data) ? res.data[0] : null;
   if (!computeIsPro(row)) return null;

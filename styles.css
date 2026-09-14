@@ -673,7 +673,253 @@ html[data-visual="minimal"] .faq {
 
 .legal-card ul { padding-left: 18px; }
 
-/* ── Success page ── */
+/* ── Success page (Material You + wavy logo) ── */
+.success-page {
+  min-height: 100vh;
+  margin: 0;
+  position: relative;
+  overflow-x: hidden;
+  background: var(--m3-surface-low);
+  color: var(--t1);
+  font-family: var(--font-ui);
+}
+
+.success-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.success-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.55;
+  animation: success-blob-drift 18s var(--m3-ease) infinite alternate;
+}
+.success-blob-a {
+  width: min(52vw, 420px);
+  height: min(52vw, 420px);
+  top: -8%;
+  left: -6%;
+  background: color-mix(in srgb, var(--m3-primary) 28%, transparent);
+}
+.success-blob-b {
+  width: min(44vw, 360px);
+  height: min(44vw, 360px);
+  right: -4%;
+  top: 18%;
+  background: color-mix(in srgb, var(--m3-secondary) 22%, transparent);
+  animation-delay: -6s;
+  animation-duration: 22s;
+}
+.success-blob-c {
+  width: min(48vw, 380px);
+  height: min(48vw, 380px);
+  left: 28%;
+  bottom: -12%;
+  background: color-mix(in srgb, var(--m3-tertiary) 20%, transparent);
+  animation-delay: -11s;
+  animation-duration: 26s;
+}
+@keyframes success-blob-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(18px, -22px) scale(1.06); }
+}
+
+.success-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px 48px;
+}
+
+.success-card {
+  width: min(100%, 440px);
+  padding: 40px 28px 32px;
+  text-align: center;
+  background: color-mix(in srgb, var(--m3-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--m3-outline) 70%, transparent);
+  border-radius: 32px;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--t1) 4%, transparent),
+    0 12px 40px color-mix(in srgb, var(--m3-primary) 10%, transparent);
+  backdrop-filter: blur(12px);
+  animation: success-card-in 480ms var(--m3-emph) both;
+}
+@keyframes success-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.success-logo-orbit {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 20px;
+}
+.success-wavy {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.success-wavy-track {
+  stroke: color-mix(in srgb, var(--m3-primary) 16%, transparent);
+  stroke-width: 1.5;
+}
+.success-wavy-ring {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform-origin: 80px 80px;
+}
+.success-wavy-ring-a {
+  stroke-width: 2.75;
+  animation: success-wavy-spin 9s linear infinite;
+}
+.success-wavy-ring-b {
+  stroke: color-mix(in srgb, var(--m3-secondary) 55%, var(--m3-primary));
+  stroke-width: 1.75;
+  opacity: 0.75;
+  animation: success-wavy-spin-rev 13s linear infinite;
+}
+.success-wavy-dot {
+  transform-origin: 80px 80px;
+  animation: success-wavy-spin 9s linear infinite;
+}
+@keyframes success-wavy-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes success-wavy-spin-rev {
+  to { transform: rotate(-360deg); }
+}
+
+.success-logo-core {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background: var(--m3-primary-container);
+  box-shadow:
+    0 4px 16px color-mix(in srgb, var(--m3-primary) 22%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--m3-on-primary-container) 8%, transparent);
+  animation: success-logo-pulse 2.8s var(--m3-ease) infinite;
+}
+.success-logo-core img {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  object-fit: cover;
+  display: block;
+}
+@keyframes success-logo-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.success-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--m3-on-primary-container);
+  background: var(--m3-primary-container);
+}
+.success-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--m3-tertiary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--m3-tertiary) 22%, transparent);
+  animation: success-chip-pulse 1.6s ease-in-out infinite;
+}
+@keyframes success-chip-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.85); opacity: 0.75; }
+}
+
+.success-card h1,
+.success-card #success-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.15rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  margin: 0 0 12px;
+  color: var(--t1);
+}
+
+.success-lede {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--t2);
+  margin: 0 0 8px;
+  max-width: 34ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+.success-hint {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--t3);
+  margin: 0 0 24px;
+  max-width: 36ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.success-cta {
+  min-width: 200px;
+  justify-content: center;
+  background: var(--m3-primary) !important;
+  color: var(--m3-on-primary) !important;
+  border-radius: 999px !important;
+  padding: 14px 22px !important;
+  font-weight: 650 !important;
+  text-decoration: none;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--m3-primary) 28%, transparent);
+  transition: transform var(--duration-fast) var(--m3-ease), box-shadow var(--duration-base) var(--m3-ease);
+}
+.success-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--m3-primary) 34%, transparent);
+}
+.success-cta:focus-visible {
+  outline: 2px solid var(--m3-primary);
+  outline-offset: 3px;
+}
+.success-ghost {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t3);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+.success-ghost:hover { color: var(--m3-primary); }
+.success-ghost:focus-visible {
+  outline: 2px solid var(--m3-primary);
+  outline-offset: 2px;
+}
+
+/* Legacy class kept for any old links/styles */
 .success-box {
   max-width: 480px;
   margin: 12vh auto;
@@ -705,14 +951,43 @@ html[data-visual="minimal"] .faq {
   font-weight: 600;
   display: inline-flex;
 }
-html[data-visual="editorial"] .success-box {
+
+html[data-mode="dark"] .success-card {
+  background: color-mix(in srgb, var(--m3-surface) 88%, transparent);
+  border-color: color-mix(in srgb, var(--m3-outline) 50%, transparent);
+}
+html[data-visual="editorial"] .success-card {
   border: 2px solid var(--t1);
-  box-shadow: var(--elev-2);
+  border-radius: 8px;
+  backdrop-filter: none;
 }
-html[data-visual="minimal"] .success-box {
+html[data-visual="minimal"] .success-card {
   border: 1px solid var(--t1);
+  border-radius: 4px;
   box-shadow: none;
+  backdrop-filter: none;
 }
+html[data-visual="editorial"] .success-logo-core,
+html[data-visual="minimal"] .success-logo-core {
+  border-radius: 8px;
+}
+html[data-visual="editorial"] .success-logo-core img,
+html[data-visual="minimal"] .success-logo-core img {
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-blob,
+  .success-wavy-ring-a,
+  .success-wavy-ring-b,
+  .success-wavy-dot,
+  .success-logo-core,
+  .success-chip-dot,
+  .success-card {
+    animation: none !important;
+  }
+}
+
 
 /* ── Footer ── */
 .site-footer {

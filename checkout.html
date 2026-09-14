@@ -252,19 +252,45 @@
     }
 
     function goSuccess(data) {
-      if (data?.redirect && String(data.redirect).startsWith("http")) {
-        location.href = data.redirect;
+      // Only leave checkout after a confirmed Pro unlock — failed/cancel stay here
+      if (!data || data.is_pro !== true) {
+        setStatus(
+          (data && (data.message || data.error)) ||
+            "Payment not confirmed — you remain on Free. Stay on this page and try again.",
+          "error",
+        );
         return;
       }
+
       const email = (data.email || checkoutCtx.email || "").trim().toLowerCase();
       const qs = new URLSearchParams({
         email,
         cycle: data.cycle || cycle,
         provider: data.provider || "",
-        is_pro: data.is_pro === false ? "0" : "1",
+        is_pro: "1",
       });
       if (checkoutCtx.ext_id) qs.set("ext_id", checkoutCtx.ext_id);
       if (checkoutCtx.user_id || data.user_id) qs.set("user_id", data.user_id || checkoutCtx.user_id);
+
+      // Only follow https success redirects on our site — never chrome-extension:// (ERR_BLOCKED_BY_CLIENT)
+      try {
+        const raw = data.redirect ? String(data.redirect) : "";
+        if (raw) {
+          const u = new URL(raw, location.origin);
+          const sameSite =
+            u.origin === location.origin ||
+            /\.vercel\.app$/i.test(u.hostname);
+          if (
+            u.protocol === "https:" &&
+            sameSite &&
+            /\/success\.html$/i.test(u.pathname)
+          ) {
+            location.href = u.toString();
+            return;
+          }
+        }
+      } catch (_) {}
+
       location.href = "/success.html?" + qs.toString();
     }
 

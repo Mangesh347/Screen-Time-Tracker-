@@ -1,5 +1,17 @@
 # Website changelog
 
+## 1.2.14 — 2026-09-14
+- **Post-payment redirect**: successful pay → `/success.html` only (never `chrome-extension://`, which Chrome blocks as ERR_BLOCKED_BY_CLIENT). Dashboard opens via extension messaging. Failed/cancel stays on checkout.
+
+## 1.2.13 — 2026-09-14
+- **Success page**: continuous moving wavy borders on card + **Back to dashboard** Material You button; tonal fact rows; secondary home CTA; richer M3 surfaces
+
+## 1.2.12 — 2026-09-14
+- **Success page UI**: richer Material You — brand header, dual wavy orbits + check badge, tonal plan/email/provider facts, clearer copy when `ext_id` is missing; dedicated `success.css`
+
+## 1.2.11 — 2026-09-14
+- **Success / Pro welcome page**: Material You redesign — tonal ambient blobs, brand mark inside moving wavy orbit rings, status chip, clearer CTAs; respects reduced-motion + dark/editorial/minimal. Redirect logic unchanged.
+
 ## 1.2.10 — 2026-09-14
 - **Payment pipeline**: provider verify FIRST → Supabase Pro + `expires_at` deadline → redirect to extension dashboard; fail stays Free on checkout
 - Deadlines: monthly +30d, yearly +365d, lifetime `null` (never expires)

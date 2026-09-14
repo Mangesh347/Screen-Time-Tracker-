@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta name="stt-build" content="1.2.14" />
   <title>You're Pro — Screen Time Tracker</title>
+  <meta name="description" content="Welcome to Screen Time Tracker Pro. Your plan is active on your billing email." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
   <script>
@@ -19,90 +22,285 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/theme-tokens.css" />
+  <link rel="stylesheet" href="/success.css" />
 </head>
-<body>
-  <div class="success-box">
-    <img src="/brand-mark.png" width="48" height="48" alt="" style="border-radius:12px;margin:0 auto 16px;display:block" />
-    <p class="eyebrow">Payment received</p>
-    <h1>Welcome to Pro</h1>
-    <p class="lede" id="detail">Opening Screen Time Tracker…</p>
-    <p class="lede" id="hint" style="font-size:14px;opacity:.8;margin-top:8px">If the extension doesn’t open, click the button below.</p>
-    <a class="btn" id="openExt" href="/">Open dashboard</a>
+<body class="sx-page">
+  <div class="sx-ambient" aria-hidden="true">
+    <span class="sx-blob sx-blob-a"></span>
+    <span class="sx-blob sx-blob-b"></span>
+    <span class="sx-blob sx-blob-c"></span>
+    <span class="sx-mesh"></span>
   </div>
+
+  <header class="sx-top">
+    <a class="sx-brand" href="/">
+      <img src="/brand-mark.png" width="28" height="28" alt="" />
+      <span>Screen Time Tracker</span>
+    </a>
+  </header>
+
+  <main class="sx-shell">
+    <div class="sx-frame">
+      <!-- Continuous moving wavy border around the card -->
+      <svg class="sx-frame-wave" viewBox="0 0 440 640" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--m3-primary)" />
+            <stop offset="45%" stop-color="var(--m3-secondary)" />
+            <stop offset="100%" stop-color="var(--m3-tertiary)" />
+          </linearGradient>
+        </defs>
+        <path class="sx-frame-path" fill="none" stroke="url(#frameGrad)"
+          d="M40,28
+             C90,18 150,22 200,16 C260,10 310,24 360,20 C400,16 418,40 422,80
+             C428,140 416,200 424,260 C430,320 412,380 420,440 C426,500 408,560 380,590
+             C340,620 280,612 220,618 C160,624 100,608 60,590 C28,572 16,520 14,460
+             C10,400 22,340 12,280 C4,220 18,160 14,100 C12,60 22,34 40,28 Z" />
+      </svg>
+
+      <section class="sx-card" aria-labelledby="sx-title">
+        <div class="sx-tonal-top" aria-hidden="true"></div>
+
+        <div class="sx-hero">
+          <div class="sx-orbit" aria-hidden="true">
+            <svg class="sx-wavy" viewBox="0 0 200 200" width="200" height="200">
+              <defs>
+                <linearGradient id="sxGradA" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="var(--m3-primary)" />
+                  <stop offset="100%" stop-color="var(--m3-secondary)" />
+                </linearGradient>
+                <linearGradient id="sxGradB" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="var(--m3-tertiary)" />
+                  <stop offset="100%" stop-color="var(--m3-primary)" />
+                </linearGradient>
+              </defs>
+              <circle class="sx-track" cx="100" cy="100" r="86" fill="none" />
+              <circle class="sx-track sx-track-inner" cx="100" cy="100" r="72" fill="none" />
+              <path class="sx-ring sx-ring-a" fill="none" stroke="url(#sxGradA)"
+                d="M100,14 C148,14 186,52 186,100 C186,148 148,186 100,186 C52,186 14,148 14,100 C14,52 52,14 100,14
+                   C122,14 142,28 152,48 C164,72 160,100 144,118 C126,140 96,146 74,136 C52,126 40,100 48,76 C56,52 76,36 100,36" />
+              <path class="sx-ring sx-ring-b" fill="none" stroke="url(#sxGradB)"
+                d="M100,28 C140,28 172,60 172,100 C172,140 140,172 100,172 C60,172 28,140 28,100 C28,60 60,28 100,28
+                   C116,28 132,38 140,54 C150,74 146,98 132,114 C116,132 90,136 72,124 C54,112 48,88 56,70 C64,52 80,40 100,40" />
+              <circle class="sx-dot" cx="100" cy="14" r="4.5" fill="var(--m3-primary)" />
+              <circle class="sx-dot sx-dot-b" cx="100" cy="28" r="3" fill="var(--m3-secondary)" />
+            </svg>
+            <div class="sx-logo">
+              <img src="/brand-mark.png" width="72" height="72" alt="" />
+              <span class="sx-check" title="Pro active" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                  <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p class="sx-chip">
+          <span class="sx-chip-pulse" aria-hidden="true"></span>
+          Payment received
+        </p>
+
+        <h1 id="sx-title">Welcome to Pro</h1>
+        <p class="sx-sub" id="sx-sub">Your plan is active. Head back to your dashboard anytime.</p>
+
+        <div class="sx-facts" aria-label="Plan details">
+          <div class="sx-fact">
+            <span class="sx-fact-ico" aria-hidden="true">✦</span>
+            <div>
+              <span class="sx-fact-label">Plan</span>
+              <span class="sx-fact-value" id="fact-plan">Yearly</span>
+            </div>
+          </div>
+          <div class="sx-fact">
+            <span class="sx-fact-ico" aria-hidden="true">✉</span>
+            <div>
+              <span class="sx-fact-label">Email</span>
+              <span class="sx-fact-value" id="fact-email">—</span>
+            </div>
+          </div>
+          <div class="sx-fact">
+            <span class="sx-fact-ico" aria-hidden="true">◎</span>
+            <div>
+              <span class="sx-fact-label">Paid with</span>
+              <span class="sx-fact-value" id="fact-provider">—</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="sx-hint" id="hint">Open Screen Time Tracker and sign in with this email to see Pro.</p>
+
+        <div class="sx-actions">
+          <!-- Primary: wavy-border Material You dashboard button -->
+          <a class="sx-dash" id="dashBtn" href="#dashboard">
+            <svg class="sx-dash-wave" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="var(--m3-primary)" />
+                  <stop offset="50%" stop-color="var(--m3-secondary)" />
+                  <stop offset="100%" stop-color="var(--m3-tertiary)" />
+                </linearGradient>
+              </defs>
+              <path class="sx-dash-path" fill="none" stroke="url(#btnGrad)"
+                d="M18,32
+                   C40,12 70,52 100,32 C130,12 160,52 190,32 C220,12 250,52 280,32 C295,22 305,28 312,32
+                   C305,38 295,42 280,32 C250,12 220,52 190,32 C160,12 130,52 100,32 C70,12 40,52 18,32
+                   C12,36 10,40 8,32 C10,24 12,28 18,32 Z" />
+              <rect class="sx-dash-rect" x="3" y="3" width="314" height="58" rx="29" ry="29" fill="none" stroke="url(#btnGrad)" />
+            </svg>
+            <span class="sx-dash-inner">
+              <svg class="sx-dash-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+                <path d="M4 13h7V4H4v9zm0 7h7v-5H4v5zm9 0h7V11h-7v9zm0-16v5h7V4h-7z" fill="currentColor"/>
+              </svg>
+              Back to dashboard
+            </span>
+          </a>
+
+          <a class="sx-tonal-btn" id="homeBtn" href="/">Back to home</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
   <script src="/site-theme.js" defer></script>
   <script>
+    // Build 1.2.14 — NEVER navigate to chrome-extension:// (Chrome → chrome-extension://invalid/)
     const p = new URLSearchParams(location.search);
     const email = (p.get('email') || '').trim().toLowerCase();
     const cycle = p.get('cycle') || 'yearly';
     const provider = p.get('provider') || '';
     const userId = p.get('user_id') || '';
-    let extId = (p.get('ext_id') || '').replace(/[^a-z0-9]/gi, '');
+    const isPro = p.get('is_pro') !== '0';
 
-    // Persist last known extension id so marketing-link checkouts can still deep-link
-    try {
-      if (extId) localStorage.setItem('stt_ext_id', extId);
-      else extId = (localStorage.getItem('stt_ext_id') || '').replace(/[^a-z0-9]/gi, '');
-    } catch {}
-
-    const dashUrl = extId
-      ? ('chrome-extension://' + extId + '/pages/dashboard.html#pro')
-      : '';
-
-    document.getElementById('detail').textContent =
-      `Pro is active on ${email || 'your billing email'} (${cycle}${provider ? ' via ' + provider : ''}).` +
-      (dashUrl ? ' Redirecting to your extension dashboard…' : ' Open Screen Time Tracker in Chrome — sign in with this email to see Pro.');
-
-    const btn = document.getElementById('openExt');
-
-    function openDashboard() {
-      if (!dashUrl) return false;
-      try {
-        // Prefer replacing this tab so the handoff feels instant
-        location.replace(dashUrl);
-        return true;
-      } catch (e) {
-        try {
-          window.open(dashUrl, '_blank', 'noopener');
-          return true;
-        } catch (e2) {
-          return false;
-        }
-      }
+    /** Chrome extension IDs are exactly 32 chars from a–p. Reject "invalid" / garbage. */
+    function normalizeExtId(raw) {
+      const id = String(raw || '').toLowerCase().replace(/[^a-p]/g, '');
+      if (id.length !== 32) return '';
+      if (id === 'invalid' || id.includes('invalid')) return '';
+      return id;
     }
 
-    if (dashUrl) {
-      btn.href = dashUrl;
-      btn.textContent = 'Open Pro dashboard';
-      btn.addEventListener('click', function (ev) {
+    let extId = normalizeExtId(p.get('ext_id'));
+    try {
+      if (extId) {
+        localStorage.setItem('stt_ext_id', extId);
+      } else {
+        const stored = normalizeExtId(localStorage.getItem('stt_ext_id'));
+        if (stored) extId = stored;
+        else localStorage.removeItem('stt_ext_id');
+      }
+      // Wipe legacy bad values that caused chrome-extension://invalid/
+      const bad = String(localStorage.getItem('stt_ext_id') || '');
+      if (!normalizeExtId(bad)) localStorage.removeItem('stt_ext_id');
+    } catch {}
+
+    const planNice = String(cycle).replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+    const payNice = provider
+      ? String(provider).replace(/\b\w/g, c => c.toUpperCase())
+      : 'Checkout';
+
+    document.getElementById('fact-plan').textContent = planNice;
+    document.getElementById('fact-email').textContent = email || 'Your billing email';
+    document.getElementById('fact-provider').textContent = payNice;
+
+    const sub = document.getElementById('sx-sub');
+    const hint = document.getElementById('hint');
+    const dashBtn = document.getElementById('dashBtn');
+
+    function pingExtension(payload) {
+      return new Promise(resolve => {
+        if (!extId || typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+          resolve({ ok: false, error: 'no_runtime' });
+          return;
+        }
+        try {
+          chrome.runtime.sendMessage(extId, payload, function (res) {
+            const err = chrome.runtime.lastError;
+            if (err) {
+              resolve({ ok: false, error: err.message || 'lastError' });
+              return;
+            }
+            resolve(res || { ok: false });
+          });
+        } catch (e) {
+          resolve({ ok: false, error: e.message || 'send_failed' });
+        }
+      });
+    }
+
+    async function openDashboard() {
+      const res = await pingExtension({
+        type: 'STT_OPEN_DASHBOARD',
+        hash: 'pro',
+        refresh: true,
+        email,
+        cycle,
+        provider,
+        user_id: userId,
+      });
+      if (res?.ok) {
+        hint.textContent = 'Dashboard opened in a new tab.';
+        hint.classList.remove('sx-hint-flash');
+        return true;
+      }
+      hint.textContent =
+        'Open Screen Time Tracker from Chrome’s toolbar → Dashboard. Sign in with this billing email to see Pro.';
+      hint.classList.add('sx-hint-flash');
+      return false;
+    }
+
+    // Hard lock: never put chrome-extension URLs in href (blocks + invalid ID)
+    dashBtn.removeAttribute('href');
+    dashBtn.setAttribute('role', 'button');
+    dashBtn.setAttribute('tabindex', '0');
+    dashBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      openDashboard();
+    });
+    dashBtn.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') {
         ev.preventDefault();
         openDashboard();
-      });
-      // Fast redirect after paint
-      setTimeout(openDashboard, 250);
-      // Retry once in case Chrome blocks the first navigation
-      setTimeout(function () {
-        if (document.visibilityState === 'visible') openDashboard();
-      }, 1200);
+      }
+    });
+
+    if (isPro) {
+      sub.textContent = 'Pro is ready. You’re on the success page — open your dashboard below.';
+      hint.textContent = extId
+        ? 'Tap Back to dashboard to open the extension (safe handoff — no blocked links).'
+        : 'Open Screen Time Tracker from the toolbar, then Dashboard — Pro is on this email.';
+      // Notify extension to refresh Pro; do NOT auto-navigate the browser tab
+      if (extId) {
+        pingExtension({
+          type: 'STT_CHECKOUT_SUCCESS',
+          hash: 'pro',
+          refresh: true,
+          email,
+          cycle,
+          provider,
+          user_id: userId,
+          is_pro: true,
+          open: false,
+        }).catch(() => {});
+      }
     } else {
-      btn.href = '/';
-      btn.textContent = 'Back home — thank you';
-      document.getElementById('hint').textContent =
-        'Tip: start checkout from the extension Upgrade button so we can open your dashboard automatically next time.';
+      sub.textContent = 'We could not confirm Pro on this visit.';
+      hint.textContent = 'Return to checkout and complete payment — you remain on Free until Pro unlocks.';
     }
 
     try {
       localStorage.setItem('stt_checkout_success', JSON.stringify({
-        email, cycle, provider, ext_id: extId, user_id: userId, at: Date.now(),
+        email, cycle, provider, ext_id: extId, user_id: userId, at: Date.now(), is_pro: isPro, build: '1.2.14',
       }));
     } catch {}
 
-    // Notify opener (extension tab) if present
     try {
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage({
           type: 'STT_CHECKOUT_SUCCESS',
-          email, cycle, provider, user_id: userId, is_pro: true,
+          email, cycle, provider, user_id: userId, is_pro: isPro,
         }, '*');
       }
     } catch {}

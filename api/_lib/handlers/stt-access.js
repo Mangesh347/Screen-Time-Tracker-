@@ -1,11 +1,10 @@
 /**
  * GET /api/stt/access
- * Prefer Authorization Bearer â†’ user_id entitlement.
- * Returns { plan, is_pro, expires_at, provider } (+ legacy pro/expiresAt aliases).
+ * Auto-checks Free vs Pro for the signed-in user (Bearer) or ?email=.
+ * Reads stt_entitlements first, then stt_profiles.plan — no manual steps.
  */
 import {
-  findEntitlementByEmail,
-  findEntitlementByUserId,
+  resolveEntitlement,
   normalizeEmail,
   computeIsPro,
   demoteEntitlement,
@@ -37,37 +36,33 @@ export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const authUser = await userFromAuthHeader(req);
-    let row = null;
+    const authUser = await userFromAuthHeader(req).catch(() => null);
+    const queryEmail = normalizeEmail(req.query?.email || "");
+    const email = normalizeEmail(authUser?.email || queryEmail);
 
-    if (authUser?.id) {
-      row = await findEntitlementByUserId(authUser.id);
-      // If row exists but expired, demote
-      if (!row) {
-        // Check raw expired row to demote
-        const { sbFetch } = await import("../supabase.js");
-        const raw = await sbFetch(
-          `/rest/v1/stt_entitlements?user_id=eq.${encodeURIComponent(authUser.id)}&select=*&limit=1`,
-        );
-        const r = raw.data?.[0];
-        if (
-          r &&
-          ["active", "paid"].includes(String(r.status || "").toLowerCase()) &&
-          r.plan !== "lifetime" &&
-          r.expires_at &&
-          new Date(r.expires_at).getTime() <= Date.now()
-        ) {
-          await demoteEntitlement({ userId: authUser.id, email: authUser.email, reason: "expired" });
-        }
-      }
-    } else {
-      // Legacy email query - read-only; does not prove ownership for upgrades
-      const email = normalizeEmail(req.query?.email || "");
-      if (email) row = await findEntitlementByEmail(email);
+    let row = await resolveEntitlement({
+      userId: authUser?.id || null,
+      email,
+    });
+
+    // Demote expired active rows so the next check stays accurate
+    if (
+      row &&
+      !computeIsPro(row) &&
+      authUser?.id &&
+      row.expires_at &&
+      String(row.plan || "").toLowerCase() !== "lifetime"
+    ) {
+      await demoteEntitlement({
+        userId: authUser.id,
+        email: authUser.email || email,
+        reason: "expired",
+      }).catch(() => {});
+      row = null;
     }
 
     if (!row || !computeIsPro(row)) {
-      return res.status(200).json(freePayload({ email: authUser?.email || normalizeEmail(req.query?.email || "") || undefined }));
+      return res.status(200).json(freePayload({ email: email || undefined }));
     }
 
     const plan = row.plan || row.cycle || "yearly";
@@ -79,13 +74,20 @@ export default async function handler(req, res) {
       provider: row.provider || null,
       expires_at: row.expires_at || null,
       expiresAt: row.expires_at || null,
-      email: row.email || authUser?.email || null,
+      email: row.email || email || null,
       user_id: row.user_id || authUser?.id || null,
       status: row.status || "active",
       providers: ["paypal", "razorpay"],
+      source: "auto",
     });
   } catch (err) {
     console.error("[stt/access]", err);
-    return res.status(500).json({ error: err.message || "access failed" });
+    // Never hard-fail the extension — treat as Free and keep UI usable
+    return res.status(200).json(
+      freePayload({
+        error: err.message || "access failed",
+        degraded: true,
+      }),
+    );
   }
 }
