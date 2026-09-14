@@ -229,6 +229,7 @@ export async function demoteEntitlement({ userId, email, reason }) {
     plan: "free",
     cycle: "free",
     status: reason || "expired",
+    expires_at: now,
     webhook_verified: true,
     webhook_verified_at: now,
     updated_at: now,
@@ -248,12 +249,18 @@ export async function demoteEntitlement({ userId, email, reason }) {
         updated_at: now,
       },
     }).catch(() => {});
-    return;
   }
   if (email) {
     await sbFetch(`/rest/v1/stt_entitlements?email=eq.${encodeURIComponent(normalizeEmail(email))}`, {
       method: "PATCH",
       body,
     });
+  }
+  // Also demote by email when we have userId (covers duplicate rows)
+  if (userId && email) {
+    await sbFetch(
+      `/rest/v1/stt_entitlements?email=eq.${encodeURIComponent(normalizeEmail(email))}&user_id=neq.${encodeURIComponent(userId)}`,
+      { method: "PATCH", body },
+    ).catch(() => {});
   }
 }

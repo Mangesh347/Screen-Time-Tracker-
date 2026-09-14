@@ -1,6 +1,8 @@
 /**
  * GET|POST /api/cron/expire-subscriptions
- * Header: Authorization: Bearer CRON_SECRET  or  x-cron-secret
+ * Hourly: any non-lifetime Pro past expires_at → Free (no errors).
+ * Auth: Authorization: Bearer CRON_SECRET  or  x-cron-secret
+ * Vercel Cron sends Authorization: Bearer <CRON_SECRET> when env is set.
  */
 import { demoteEntitlement } from "../_lib/entitlement.js";
 import { sbFetch } from "../_lib/supabase.js";
@@ -21,24 +23,36 @@ export default async function handler(req, res) {
 
   const now = new Date().toISOString();
   const raw = await sbFetch(
-    `/rest/v1/stt_entitlements?status=in.(active,paid)&plan=neq.lifetime&expires_at=not.is.null&expires_at=lte.${encodeURIComponent(now)}&select=id,user_id,email,plan,cycle,expires_at&limit=500`,
+    `/rest/v1/stt_entitlements?status=in.(active,paid)&plan=neq.lifetime&cycle=neq.lifetime&expires_at=not.is.null&expires_at=lte.${encodeURIComponent(now)}&select=id,user_id,email,plan,cycle,expires_at&limit=500`,
   );
 
   if (!raw.ok) {
-    return res.status(500).json({ error: raw.data || "query failed" });
+    return res.status(500).json({ error: raw.data || "query failed", demoted: 0 });
   }
 
   const rows = Array.isArray(raw.data) ? raw.data : [];
   let demoted = 0;
+  const errors = [];
+
   for (const row of rows) {
     if (row.plan === "lifetime" || row.cycle === "lifetime") continue;
-    await demoteEntitlement({
-      userId: row.user_id,
-      email: row.email,
-      reason: "expired",
-    });
-    demoted++;
+    try {
+      await demoteEntitlement({
+        userId: row.user_id,
+        email: row.email,
+        reason: "expired",
+      });
+      demoted++;
+    } catch (e) {
+      errors.push({ id: row.id, error: e.message || String(e) });
+    }
   }
 
-  return res.status(200).json({ ok: true, scanned: rows.length, demoted, at: now });
+  return res.status(200).json({
+    ok: true,
+    scanned: rows.length,
+    demoted,
+    errors: errors.length ? errors : undefined,
+    at: now,
+  });
 }

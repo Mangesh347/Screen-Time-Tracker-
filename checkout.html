@@ -251,6 +251,10 @@
     }
 
     function goSuccess(data) {
+      if (data?.redirect && String(data.redirect).startsWith("http")) {
+        location.href = data.redirect;
+        return;
+      }
       const email = (data.email || checkoutCtx.email || "").trim().toLowerCase();
       const qs = new URLSearchParams({
         email,
@@ -408,6 +412,20 @@
         if (typeof Razorpay === "undefined") throw new Error("Razorpay Checkout.js not loaded");
         if (data.user_id) checkoutCtx.user_id = data.user_id;
 
+        try {
+          sessionStorage.setItem(
+            "stt_rzp_order",
+            JSON.stringify({
+              order_id: data.order_id,
+              email: e,
+              cycle,
+              access_token: checkoutCtx.access_token,
+              user_id: data.user_id || checkoutCtx.user_id,
+              ext_id: checkoutCtx.ext_id,
+            }),
+          );
+        } catch {}
+
         const rzp = new Razorpay({
           key: data.key_id,
           amount: data.amount,
@@ -418,18 +436,55 @@
           prefill: { email: e },
           theme: { color: "#6750a4" },
           handler: async function (response) {
-            setStatus("Verifying payment…");
+            setStatus("Verifying payment and unlocking Pro…");
             try {
               const verify = await fetch("/api/razorpay/verify-payment", {
                 method: "POST",
                 headers: authHeaders(),
-                body: JSON.stringify(authBody({ ...response, email: e, cycle })),
+                body: JSON.stringify(
+                  authBody({
+                    ...response,
+                    email: e,
+                    cycle,
+                    ext_id: checkoutCtx.ext_id || undefined,
+                  }),
+                ),
               });
               const v = await verify.json().catch(() => ({}));
               if (!verify.ok || !v.success || v.is_pro !== true) {
+                // Paid at Razorpay but verify failed — try claim by payment id
+                if (response.razorpay_payment_id) {
+                  setStatus("Payment received — recovering Pro unlock…");
+                  const claim = await fetch("/api/razorpay/claim-payment", {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify(
+                      authBody({
+                        payment_id: response.razorpay_payment_id,
+                        order_id: response.razorpay_order_id || data.order_id,
+                        email: e,
+                        cycle,
+                        ext_id: checkoutCtx.ext_id || undefined,
+                      }),
+                    ),
+                  });
+                  const c = await claim.json().catch(() => ({}));
+                  if (claim.ok && c.success && c.is_pro === true) {
+                    try { sessionStorage.removeItem("stt_rzp_order"); } catch {}
+                    goSuccess(c);
+                    return;
+                  }
+                  setStatus(
+                    apiError(c, apiError(v, "Payment received but Pro unlock failed. Contact support with your payment id.")) +
+                      (response.razorpay_payment_id ? ` Payment id: ${response.razorpay_payment_id}` : ""),
+                    "error",
+                  );
+                  return;
+                }
                 setStatus(apiError(v, "Payment verify failed — you remain on Free."), "error");
                 return;
               }
+              try { sessionStorage.removeItem("stt_rzp_order"); } catch {}
               goSuccess(v);
             } catch (err) {
               setStatus(err.message || "Verify failed — you remain on Free.", "error");
@@ -444,13 +499,13 @@
         rzp.on("payment.failed", function (resp) {
           const msg =
             (resp && resp.error && (resp.error.description || resp.error.reason)) ||
-            "Payment failed — you remain on Free.";
+            "Payment failed — you remain on Free. No Pro changes were made.";
           setStatus(msg, "error");
         });
         rzp.open();
         setStatus("");
       } catch (err) {
-        setStatus(err.message, "error");
+        setStatus((err.message || "Checkout error") + " — you remain on Free.", "error");
       }
     }
 
@@ -502,7 +557,44 @@
       }
     }
 
-    loadConfig().then(() => maybeCapturePaypal());
+    async function maybeClaimRazorpay() {
+      const paymentId = params.get("payment_id") || params.get("razorpay_payment_id");
+      if (!paymentId) return;
+      const e =
+        checkoutCtx.email ||
+        (document.getElementById("buyerEmail").value || "").trim().toLowerCase() ||
+        params.get("email");
+      if (!e || !e.includes("@")) {
+        setStatus("Enter your billing email, then we’ll recover Pro for this payment.", "error");
+        return;
+      }
+      document.getElementById("buyerEmail").value = e;
+      setStatus("Recovering Pro from your Razorpay payment…");
+      try {
+        const res = await fetch("/api/razorpay/claim-payment", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(
+            authBody({
+              payment_id: paymentId,
+              order_id: params.get("order_id") || params.get("razorpay_order_id") || "",
+              email: e,
+              cycle: checkoutCtx.cycle || cycle,
+              ext_id: checkoutCtx.ext_id || undefined,
+            }),
+          ),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success || data.is_pro !== true) {
+          throw new Error(apiError(data, "Could not recover Pro from this payment id."));
+        }
+        goSuccess(data);
+      } catch (err) {
+        setStatus(err.message, "error");
+      }
+    }
+
+    loadConfig().then(() => Promise.all([maybeCapturePaypal(), maybeClaimRazorpay()]));
   </script>
 </body>
 </html>

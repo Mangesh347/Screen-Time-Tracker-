@@ -114,10 +114,19 @@ export default async function handler(req, res) {
       },
     });
 
-    await sbFetch(`/rest/v1/stt_checkout_sessions`, {
+    const sessRes = await sbFetch(`/rest/v1/stt_checkout_sessions`, {
       method: "POST",
+      prefer: "return=representation",
       body: { ...sessionRow, order_id: order.id },
-    }).catch(() => {});
+    });
+    if (!sessRes.ok) {
+      console.error(
+        "[STT Razorpay create] checkout session insert failed",
+        sessRes.status,
+        typeof sessRes.data === "string" ? sessRes.data.slice(0, 300) : sessRes.data,
+      );
+      // Still return the order — verify will grant Pro from a valid signature + order notes.
+    }
 
     return res.status(200).json({
       success: true,
@@ -129,6 +138,7 @@ export default async function handler(req, res) {
       quote,
       mode,
       user_id: userId,
+      session_saved: !!sessRes.ok,
     });
   } catch (err) {
     console.error("[STT Razorpay create]", err);

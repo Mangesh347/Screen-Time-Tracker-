@@ -7,9 +7,10 @@ import {
   missingPaypalEnvVars,
   allowSimulatedCheckout,
 } from "../pricing.js";
-import { upsertEntitlement, claimPaymentEvent, markEventProcessed } from "../entitlement.js";
+import { upsertEntitlement } from "../entitlement.js";
 import { ensureCheckoutUser } from "../auth.js";
 import { sbFetch } from "../supabase.js";
+import { fulfillVerifiedPayment, buildSuccessRedirect } from "../fulfill.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -124,10 +125,20 @@ export default async function handler(req, res) {
     }
 
     const userId = authUser.id;
-    const sess = await sbFetch(
-      `/rest/v1/stt_checkout_sessions?user_id=eq.${encodeURIComponent(userId)}&order_id=eq.${encodeURIComponent(order_id)}&select=*&limit=1`,
-    );
-    let session = sess.data?.[0];
+    // Prefer order_id alone — capture/signature path already authenticates the order
+    let session = null;
+    {
+      const byOrder = await sbFetch(
+        `/rest/v1/stt_checkout_sessions?order_id=eq.${encodeURIComponent(order_id)}&select=*&order=created_at.desc&limit=1`,
+      );
+      session = byOrder.data?.[0] || null;
+    }
+    if (!session) {
+      const sess = await sbFetch(
+        `/rest/v1/stt_checkout_sessions?user_id=eq.${encodeURIComponent(userId)}&order_id=eq.${encodeURIComponent(order_id)}&select=*&limit=1`,
+      );
+      session = sess.data?.[0];
+    }
     if (!session) {
       // Fallback: email-only order lookup (marketing return URL)
       const billingLookup = authUser.email || String(email || "").toLowerCase().trim();
@@ -138,12 +149,8 @@ export default async function handler(req, res) {
         session = byEmail.data?.[0];
       }
     }
-    if (!session) {
-      return res.status(403).json({
-        error: "Checkout session not found for this user",
-        is_pro: false,
-      });
-    }
+    // Do not hard-fail if session is missing — capture still proves payment.
+    // Session is preferred for cycle; body.cycle is the fallback.
 
     const planCycle = session?.cycle || cycle;
     const quote = quoteUSD(planCycle);
@@ -189,64 +196,52 @@ export default async function handler(req, res) {
       cap?.id ||
       order_id;
 
-    const eventId = `pp_capture_${paymentId}`;
-    const claim = await claimPaymentEvent({
+    // Provider capture succeeded → write Pro + deadline, then redirect
+    const result = await fulfillVerifiedPayment({
       provider: "paypal",
-      eventId,
+      eventId: `pp_capture_${paymentId}`,
       eventType: "client_capture",
       paymentId,
       orderId: order_id,
       userId,
       email: billingEmail,
       cycle: plan.id,
-      verified: true,
+      amount: quote.total,
+      currency: "USD",
+      mode,
+      extId: String(body.ext_id || "").replace(/[^a-z0-9]/gi, ""),
+      metadata: { via: "vercel_capture" },
       payload: body,
     });
 
-    if (!claim.claimed && !claim.error) {
-      return res.status(200).json({
-        success: true,
-        status: "COMPLETED",
-        plan: plan.id,
-        duplicate: true,
-        provider: "paypal",
-        expiresAt,
-        is_pro: true,
+    if (!result.ok) {
+      return res.status(result.status || 502).json({
+        ...result,
+        message:
+          result.message ||
+          "PayPal payment captured but Pro could not be saved. You remain Free — contact support with your order id.",
       });
     }
 
-    await upsertEntitlement({
-      email: billingEmail,
-      userId,
-      plan: quote.cycle,
-      cycle: quote.cycle,
-      provider: "paypal",
-      expiresAt,
-      externalId: paymentId,
-      paymentId,
-      orderId: order_id,
-      amount: quote.total,
-      currency: "USD",
-      webhookVerified: true,
-      metadata: { via: "vercel_capture", mode },
-    });
-
-    await markEventProcessed("paypal", eventId, "processed");
-
     return res.status(200).json({
-      success: true,
+      ...result,
       status: "COMPLETED",
-      plan: quote.cycle,
-      cycle: quote.cycle,
-      email: billingEmail,
-      user_id: userId,
-      expiresAt,
-      provider: "paypal",
-      is_pro: true,
-      mode,
+      redirect:
+        result.redirect ||
+        buildSuccessRedirect({
+          email: billingEmail,
+          cycle: plan.id,
+          provider: "paypal",
+          userId,
+          extId: body.ext_id,
+        }),
     });
   } catch (err) {
     console.error("[STT PayPal capture]", err);
-    return res.status(500).json({ error: err.message, is_pro: false });
+    return res.status(500).json({
+      error: err.message,
+      message: "Capture error — you remain on Free.",
+      is_pro: false,
+    });
   }
 }

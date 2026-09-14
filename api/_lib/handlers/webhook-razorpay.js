@@ -10,6 +10,7 @@ import {
 } from "../entitlement.js";
 import { computeExpiresAt, getPlan } from "../pricing.js";
 import { sbFetch } from "../supabase.js";
+import { createCheckoutUserByEmail } from "../auth.js";
 
 export const config = { api: { bodyParser: false } };
 
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
 
       if (!userId && orderId) {
         const sess = await sbFetch(
-          `/rest/v1/stt_checkout_sessions?provider=eq.razorpay&order_id=eq.${encodeURIComponent(orderId)}&select=user_id,email,cycle&limit=1`,
+          `/rest/v1/stt_checkout_sessions?order_id=eq.${encodeURIComponent(orderId)}&select=user_id,email,cycle&limit=1`,
         );
         const s = sess.data?.[0];
         if (s) {
@@ -89,9 +90,15 @@ export default async function handler(req, res) {
         }
       }
 
-      if (!userId) {
-        await markEventProcessed("razorpay", eventId, "error", "missing user_id");
-        return res.status(400).json({ error: "Cannot bind payment to user_id" });
+      // Email-only fallback: create/bind Auth user so Pro still unlocks without notes.user_id
+      if (!userId && email) {
+        const created = await createCheckoutUserByEmail(email);
+        userId = created?.id || null;
+      }
+
+      if (!userId && !email) {
+        await markEventProcessed("razorpay", eventId, "error", "missing user_id and email");
+        return res.status(400).json({ error: "Cannot bind payment to user or email" });
       }
 
       const plan = getPlan(cycle);
@@ -111,7 +118,7 @@ export default async function handler(req, res) {
         metadata: { event_id: eventId },
       });
       await markEventProcessed("razorpay", eventId, "processed");
-      return res.status(200).json({ ok: true, plan: plan.id, user_id: userId });
+      return res.status(200).json({ ok: true, plan: plan.id, user_id: userId, email });
     }
 
     if (

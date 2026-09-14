@@ -1,5 +1,14 @@
 # Website changelog
 
+## 1.2.10 — 2026-09-14
+- **Payment pipeline**: provider verify FIRST → Supabase Pro + `expires_at` deadline → redirect to extension dashboard; fail stays Free on checkout
+- Deadlines: monthly +30d, yearly +365d, lifetime `null` (never expires)
+- Hourly cron `/api/cron/expire-subscriptions` demotes expired Pro → Free (no errors)
+- Shared `fulfillVerifiedPayment` — Pro only after entitlement write succeeds
+- Razorpay verify no longer fails with “Checkout session not found”
+- `/api/razorpay/claim-payment` recovery for already-captured payments
+- Redeploy Vercel required
+
 ## 1.2.9 — 2026-09-14
 - **Sandbox-first payments**: `paymentMode()` defaults to sandbox when `PAYMENT_TEST_MODE` unset; live only if `PAYMENT_TEST_MODE=false`
 - Razorpay sandbox ignores `rzp_live_*` legacy `RAZORPAY_KEY_*` fallbacks (avoids accidental live keys)

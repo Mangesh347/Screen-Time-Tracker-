@@ -113,4 +113,6 @@ billingApiUrl: "https://YOUR-PROJECT.vercel.app/api/stt/access",
 | `POST /api/paypal/create-order` | Start PayPal |
 | `POST /api/paypal/capture-order` | Finish PayPal → `stt_entitlements` |
 | `POST /api/razorpay/create-order` | Start Razorpay |
-| `POST /api/razorpay/verify-payment` | Verify → `stt_entitlements` |
+| `POST /api/razorpay/verify-payment` | Verify signature → `stt_entitlements` + `expires_at` → redirect |
+| `POST /api/razorpay/claim-payment` | Recover Pro from captured `payment_id` + email |
+| `GET /api/cron/expire-subscriptions` | Hourly: expired Pro → Free (`CRON_SECRET`) |

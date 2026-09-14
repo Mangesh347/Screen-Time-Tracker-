@@ -3,10 +3,12 @@
  */
 import createOrder from "../_lib/handlers/razorpay-create-order.js";
 import verifyPayment from "../_lib/handlers/razorpay-verify-payment.js";
+import claimPayment from "../_lib/handlers/razorpay-claim-payment.js";
 
 const ROUTES = {
   "create-order": createOrder,
   "verify-payment": verifyPayment,
+  "claim-payment": claimPayment,
 };
 
 function routeKey(req) {

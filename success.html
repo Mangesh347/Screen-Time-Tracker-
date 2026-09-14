@@ -33,36 +33,78 @@
   <script src="/site-theme.js" defer></script>
   <script>
     const p = new URLSearchParams(location.search);
-    const email = p.get('email') || '';
+    const email = (p.get('email') || '').trim().toLowerCase();
     const cycle = p.get('cycle') || 'yearly';
     const provider = p.get('provider') || '';
-    const extId = (p.get('ext_id') || '').replace(/[^a-z0-9]/gi, '');
+    const userId = p.get('user_id') || '';
+    let extId = (p.get('ext_id') || '').replace(/[^a-z0-9]/gi, '');
+
+    // Persist last known extension id so marketing-link checkouts can still deep-link
+    try {
+      if (extId) localStorage.setItem('stt_ext_id', extId);
+      else extId = (localStorage.getItem('stt_ext_id') || '').replace(/[^a-z0-9]/gi, '');
+    } catch {}
+
     const dashUrl = extId
       ? ('chrome-extension://' + extId + '/pages/dashboard.html#pro')
       : '';
 
     document.getElementById('detail').textContent =
-      `Plan: ${cycle}${provider ? ' via ' + provider : ''}${email ? ' · ' + email : ''}.` +
-      (dashUrl ? ' Redirecting to your extension dashboard…' : ' Reopen Screen Time Tracker in Chrome — Pro unlocks on this email.');
+      `Pro is active on ${email || 'your billing email'} (${cycle}${provider ? ' via ' + provider : ''}).` +
+      (dashUrl ? ' Redirecting to your extension dashboard…' : ' Open Screen Time Tracker in Chrome — sign in with this email to see Pro.');
 
     const btn = document.getElementById('openExt');
+
+    function openDashboard() {
+      if (!dashUrl) return false;
+      try {
+        // Prefer replacing this tab so the handoff feels instant
+        location.replace(dashUrl);
+        return true;
+      } catch (e) {
+        try {
+          window.open(dashUrl, '_blank', 'noopener');
+          return true;
+        } catch (e2) {
+          return false;
+        }
+      }
+    }
+
     if (dashUrl) {
       btn.href = dashUrl;
       btn.textContent = 'Open Pro dashboard';
+      btn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        openDashboard();
+      });
+      // Fast redirect after paint
+      setTimeout(openDashboard, 250);
+      // Retry once in case Chrome blocks the first navigation
       setTimeout(function () {
-        try { location.href = dashUrl; } catch (e) {}
-      }, 600);
+        if (document.visibilityState === 'visible') openDashboard();
+      }, 1200);
     } else {
       btn.href = '/';
       btn.textContent = 'Back home — thank you';
       document.getElementById('hint').textContent =
-        'No extension id on this link — open Screen Time Tracker manually. Pro is bound to your billing email.';
+        'Tip: start checkout from the extension Upgrade button so we can open your dashboard automatically next time.';
     }
 
     try {
       localStorage.setItem('stt_checkout_success', JSON.stringify({
-        email, cycle, provider, ext_id: extId, at: Date.now(),
+        email, cycle, provider, ext_id: extId, user_id: userId, at: Date.now(),
       }));
+    } catch {}
+
+    // Notify opener (extension tab) if present
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+          type: 'STT_CHECKOUT_SUCCESS',
+          email, cycle, provider, user_id: userId, is_pro: true,
+        }, '*');
+      }
     } catch {}
   </script>
 </body>
