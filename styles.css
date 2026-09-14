@@ -1035,6 +1035,13 @@ html[data-visual="minimal"] .success-logo-core img {
   gap: 14px;
 }
 
+.pay-logos img {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.92;
+}
+
 .pay-logos svg { height: 18px; width: auto; }
 .pay-logos text { fill: var(--pay-logo-fill); }
 
