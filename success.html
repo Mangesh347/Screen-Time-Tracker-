@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-  <meta name="stt-build" content="1.2.14" />
+  <meta name="stt-build" content="1.2.15" />
   <title>You're Pro — Screen Time Tracker</title>
   <meta name="description" content="Welcome to Screen Time Tracker Pro. Your plan is active on your billing email." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -165,7 +165,7 @@
 
   <script src="/site-theme.js" defer></script>
   <script>
-    // Build 1.2.14 — NEVER navigate to chrome-extension:// (Chrome → chrome-extension://invalid/)
+    // Build 1.2.15 — NEVER navigate to chrome-extension:// (Chrome → chrome-extension://invalid/)
     const p = new URLSearchParams(location.search);
     const email = (p.get('email') || '').trim().toLowerCase();
     const cycle = p.get('cycle') || 'yearly';
@@ -271,19 +271,24 @@
       hint.textContent = extId
         ? 'Tap Back to dashboard to open the extension (safe handoff — no blocked links).'
         : 'Open Screen Time Tracker from the toolbar, then Dashboard — Pro is on this email.';
-      // Notify extension to refresh Pro; do NOT auto-navigate the browser tab
+      // Instant handoff: extension switches this tab → dashboard (no chrome-extension:// navigation)
       if (extId) {
         pingExtension({
-          type: 'STT_CHECKOUT_SUCCESS',
+          type: 'STT_OPEN_DASHBOARD',
           hash: 'pro',
           refresh: true,
+          open: true,
+          replaceTab: true,
           email,
           cycle,
           provider,
           user_id: userId,
           is_pro: true,
-          open: false,
-        }).catch(() => {});
+        }).then(res => {
+          if (res?.ok) {
+            hint.textContent = 'Opening dashboard…';
+          }
+        });
       }
     } else {
       sub.textContent = 'We could not confirm Pro on this visit.';
@@ -292,7 +297,7 @@
 
     try {
       localStorage.setItem('stt_checkout_success', JSON.stringify({
-        email, cycle, provider, ext_id: extId, user_id: userId, at: Date.now(), is_pro: isPro, build: '1.2.14',
+        email, cycle, provider, ext_id: extId, user_id: userId, at: Date.now(), is_pro: isPro, build: '1.2.15',
       }));
     } catch {}
 

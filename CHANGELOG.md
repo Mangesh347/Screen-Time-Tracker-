@@ -1,7 +1,11 @@
 # Website changelog
 
+## 1.2.15 — 2026-09-14
+- **Instant dashboard after pay**: checkout pings extension to replace the tab; success page never uses `chrome-extension://` links (fixes live `chrome-extension://invalid/`)
+
 ## 1.2.14 — 2026-09-14
-- **Post-payment redirect**: successful pay → `/success.html` only (never `chrome-extension://`, which Chrome blocks as ERR_BLOCKED_BY_CLIENT). Dashboard opens via extension messaging. Failed/cancel stays on checkout.
+- **CRITICAL**: stop `chrome-extension://invalid/` after pay — live page was still `location.replace` to extension URLs; now stays on `/success.html` (build stamp 1.2.14), dashboard only via extension messaging + button
+- Failed/cancel stays on checkout; no-cache headers on success.html
 
 ## 1.2.13 — 2026-09-14
 - **Success page**: continuous moving wavy borders on card + **Back to dashboard** Material You button; tonal fact rows; secondary home CTA; richer M3 surfaces
