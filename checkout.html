@@ -418,9 +418,8 @@
             banner.textContent = "Live checkout — real charges. Pro unlocks on your billing email.";
           } else {
             banner.classList.add("ck-practice");
-            banner.textContent = allowSimulated
-              ? "Sandbox / test mode — test keys or simulated preview. Pro unlocks only after a verified test payment."
-              : "Sandbox / test mode — use PayPal sandbox or Razorpay test keys. No live charges.";
+            banner.textContent =
+              "PayPal SANDBOX — use a Sandbox buyer from developer.paypal.com (Accounts). Your real PayPal login shows “session timed out / log in again” and never completes payment.";
           }
         }
       } catch (_) {
@@ -437,7 +436,13 @@
       if (!e) return;
       currency = "USD";
       render();
-      setStatus(`Creating PayPal ${modeLabel()} order…`);
+      if (paymentMode !== "live") {
+        setStatus(
+          "Opening PayPal Sandbox… Log in with a Sandbox buyer (not personal PayPal), then tap Pay Now. Login alone does not unlock Pro.",
+        );
+      } else {
+        setStatus(`Creating PayPal ${modeLabel()} order…`);
+      }
       try {
         const res = await fetch("/api/paypal/create-order", {
           method: "POST",
@@ -462,11 +467,36 @@
                 simulated: true,
               }),
             );
+            goSuccess({
+              email: e,
+              cycle,
+              provider: "paypal",
+              is_pro: false,
+              order_id: data.order_id,
+              token: data.order_id,
+              user_id: data.user_id || checkoutCtx.user_id,
+            });
           }
           return;
         }
 
         if (!data.approve_url) throw new Error("No PayPal approve URL — check keys for " + modeLabel() + " mode.");
+
+        const approveHost = (() => {
+          try { return new URL(data.approve_url).hostname; } catch { return ""; }
+        })();
+        const isSandboxApprove = /sandbox\.paypal\.com/i.test(approveHost);
+        if (paymentMode !== "live" && !isSandboxApprove) {
+          throw new Error(
+            "PayPal mode mismatch: server is sandbox but approve URL is not sandbox.paypal.com. Check PAYPAL_TEST_* keys on Vercel.",
+          );
+        }
+        if (paymentMode === "live" && isSandboxApprove) {
+          throw new Error(
+            "PayPal mode mismatch: server is live but approve URL is sandbox. Set PAYMENT_TEST_MODE=false and PAYPAL_LIVE_* keys.",
+          );
+        }
+
         sessionStorage.setItem(
           "stt_pp_order",
           JSON.stringify({

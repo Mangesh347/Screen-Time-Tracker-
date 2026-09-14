@@ -129,6 +129,7 @@ export default async function handler(req, res) {
 
     const extId = String(body.ext_id || "").replace(/[^a-z]+/gi, "");
     const returnQs = new URLSearchParams({
+      provider: "paypal",
       paid: "paypal",
       cycle: quote.cycle,
       email: billingEmail,
@@ -136,7 +137,7 @@ export default async function handler(req, res) {
     });
     if (extId) returnQs.set("ext_id", extId);
     // Do NOT put access_token in return_url — long JWTs break PayPal redirects / look like expired sessions.
-    // Checkout restores the session from sessionStorage (stt_pp_order).
+    // Success page restores session from sessionStorage (stt_pp_order). PayPal appends token + PayerID.
 
     const orderRes = await fetch(`${creds.apiBase}/v2/checkout/orders`, {
       method: "POST",
@@ -174,7 +175,9 @@ export default async function handler(req, res) {
           brand_name: "Screen Time Tracker — Fenwick Labs",
           user_action: "PAY_NOW",
           shipping_preference: "NO_SHIPPING",
-          return_url: `${siteUrl()}/checkout.html?${returnQs.toString()}`,
+          // BILLING = card/guest first; reduces “log in with other credentials” vs forced LOGIN
+          landing_page: "BILLING",
+          return_url: `${siteUrl()}/success.html?${returnQs.toString()}`,
           cancel_url: `${siteUrl()}/checkout.html?cancel=1&email=${encodeURIComponent(billingEmail)}`,
         },
       }),
@@ -208,6 +211,7 @@ export default async function handler(req, res) {
       quote,
       approve_url: approve,
       mode,
+      paypal_is_sandbox: mode === "sandbox",
       user_id: userId,
     });
   } catch (err) {

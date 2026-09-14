@@ -6,6 +6,14 @@ After any env change → **Redeploy**, then check
 
 ---
 
+## PayPal “session timed out / log in again”
+
+That message is from **PayPal’s site**, not ours. In **sandbox** mode the approve URL is `sandbox.paypal.com` — you must log in with a **Sandbox buyer** from [developer.paypal.com → Sandbox → Accounts](https://developer.paypal.com/dashboard/accounts). Your personal/live PayPal account will show session / “use other credentials” errors and **will not complete payment** (login alone ≠ paid).
+
+To charge real money: set `PAYMENT_TEST_MODE=false` + live PayPal keys, redeploy, then use your real PayPal.
+
+---
+
 ## NOW (TEST / sandbox)
 
 Set these on Vercel → **Project → Settings → Environment Variables** for **Production** and **Preview**:

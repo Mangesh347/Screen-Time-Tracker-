@@ -1,5 +1,9 @@
 # Website changelog
 
+## 1.2.19 — 2026-09-14
+- **PayPal**: return directly to `/success.html` (no checkout hop); `landing_page: BILLING`; sandbox banner warns real PayPal login fails; approve-URL host mismatch guards
+- **Success UI**: Material Design 3 redesign — logo in rounded square (no orbit rings), continuous wavy card border, failed-state copy (“Not confirmed yet” / Retry / Back to checkout)
+
 ## 1.2.18 — 2026-09-14
 - **PayPal session timeout**: stop putting JWT `access_token` in PayPal `return_url` (breaks/looks like expired PayPal sessions); clearer checkout tip when PayPal session expires
 

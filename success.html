@@ -1,182 +1,107 @@
 <!DOCTYPE html>
-<html lang="en" data-visual="material" data-mode="light" data-theme="auto" data-m3="expressive">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-  <meta name="stt-build" content="1.2.17" />
+  <meta name="stt-build" content="1.2.19" />
   <title>Confirming payment — Screen Time Tracker</title>
   <meta name="description" content="Confirming your Screen Time Tracker Pro payment." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
-  <script>
-    (function () {
-      try {
-        var v = localStorage.getItem("stt_site_visual") || "material";
-        if (v !== "editorial" && v !== "minimal") v = "material";
-        var m = localStorage.getItem("stt_site_mode") || "system";
-        var tone = m === "dark" || m === "light" ? m :
-          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-        document.documentElement.setAttribute("data-visual", v);
-        document.documentElement.setAttribute("data-mode", tone);
-      } catch (e) {}
-    })();
-  </script>
-  <link rel="stylesheet" href="/theme-tokens.css" />
   <link rel="stylesheet" href="/success.css" />
 </head>
 <body class="sx-page" data-sx-state="verifying">
-  <div class="sx-ambient" aria-hidden="true">
-    <span class="sx-blob sx-blob-a"></span>
-    <span class="sx-blob sx-blob-b"></span>
-    <span class="sx-blob sx-blob-c"></span>
-    <span class="sx-mesh"></span>
-  </div>
-
-  <header class="sx-top">
-    <a class="sx-brand" href="/">
-      <img src="/brand-mark.png" width="28" height="28" alt="" />
-      <span>Screen Time Tracker</span>
-    </a>
-  </header>
-
   <main class="sx-shell">
     <div class="sx-frame">
-      <svg class="sx-frame-wave" viewBox="0 0 440 640" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--m3-primary)" />
-            <stop offset="45%" stop-color="var(--m3-secondary)" />
-            <stop offset="100%" stop-color="var(--m3-tertiary)" />
-          </linearGradient>
-        </defs>
-        <path class="sx-frame-path" fill="none" stroke="url(#frameGrad)"
-          d="M40,28
-             C90,18 150,22 200,16 C260,10 310,24 360,20 C400,16 418,40 422,80
-             C428,140 416,200 424,260 C430,320 412,380 420,440 C426,500 408,560 380,590
-             C340,620 280,612 220,618 C160,624 100,608 60,590 C28,572 16,520 14,460
-             C10,400 22,340 12,280 C4,220 18,160 14,100 C12,60 22,34 40,28 Z" />
+      <!-- Continuous smooth wavy border (single path) + flowing highlight -->
+      <svg class="sx-wave" viewBox="0 0 400 560" preserveAspectRatio="none" aria-hidden="true">
+        <path class="sx-wave-path"
+          d="M28,36
+             C72,18 128,28 176,22 C228,16 276,30 324,24 C356,20 378,44 382,78
+             C388,130 376,188 384,244 C390,300 372,356 380,412 C386,460 368,508 336,528
+             C292,552 236,544 184,550 C132,556 78,540 48,520 C24,504 16,452 14,400
+             C10,340 22,284 12,228 C4,172 18,120 14,78 C12,52 18,40 28,36 Z" />
+        <path class="sx-wave-glow"
+          d="M28,36
+             C72,18 128,28 176,22 C228,16 276,30 324,24 C356,20 378,44 382,78
+             C388,130 376,188 384,244 C390,300 372,356 380,412 C386,460 368,508 336,528
+             C292,552 236,544 184,550 C132,556 78,540 48,520 C24,504 16,452 14,400
+             C10,340 22,284 12,228 C4,172 18,120 14,78 C12,52 18,40 28,36 Z" />
       </svg>
 
       <section class="sx-card" aria-labelledby="sx-title" aria-live="polite">
-        <div class="sx-tonal-top" aria-hidden="true"></div>
-
-        <div class="sx-hero">
-          <div class="sx-orbit" aria-hidden="true">
-            <svg class="sx-wavy" viewBox="0 0 200 200" width="200" height="200">
-              <defs>
-                <linearGradient id="sxGradA" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="var(--m3-primary)" />
-                  <stop offset="100%" stop-color="var(--m3-secondary)" />
-                </linearGradient>
-                <linearGradient id="sxGradB" x1="100%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="var(--m3-tertiary)" />
-                  <stop offset="100%" stop-color="var(--m3-primary)" />
-                </linearGradient>
-              </defs>
-              <circle class="sx-track" cx="100" cy="100" r="86" fill="none" />
-              <circle class="sx-track sx-track-inner" cx="100" cy="100" r="72" fill="none" />
-              <path class="sx-ring sx-ring-a" fill="none" stroke="url(#sxGradA)"
-                d="M100,14 C148,14 186,52 186,100 C186,148 148,186 100,186 C52,186 14,148 14,100 C14,52 52,14 100,14
-                   C122,14 142,28 152,48 C164,72 160,100 144,118 C126,140 96,146 74,136 C52,126 40,100 48,76 C56,52 76,36 100,36" />
-              <path class="sx-ring sx-ring-b" fill="none" stroke="url(#sxGradB)"
-                d="M100,28 C140,28 172,60 172,100 C172,140 140,172 100,172 C60,172 28,140 28,100 C28,60 60,28 100,28
-                   C116,28 132,38 140,54 C150,74 146,98 132,114 C116,132 90,136 72,124 C54,112 48,88 56,70 C64,52 80,40 100,40" />
-              <circle class="sx-dot" cx="100" cy="14" r="4.5" fill="var(--m3-primary)" />
-              <circle class="sx-dot sx-dot-b" cx="100" cy="28" r="3" fill="var(--m3-secondary)" />
-            </svg>
-            <div class="sx-logo">
-              <img src="/brand-mark.png" width="72" height="72" alt="" />
-              <span class="sx-check" id="sx-check" title="Status" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                  <path id="sx-check-path" d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-            </div>
+        <div class="sx-brand">
+          <div class="sx-logo-box">
+            <img src="/brand-mark.png" width="40" height="40" alt="" />
           </div>
+          <p class="sx-brand-name">Screen Time Tracker</p>
         </div>
 
-        <p class="sx-chip" id="sx-chip">
-          <span class="sx-chip-pulse" aria-hidden="true"></span>
+        <p class="sx-badge" id="sx-chip">
           <span id="sx-chip-text">Verifying payment…</span>
         </p>
 
-        <h1 id="sx-title">Confirming your payment</h1>
-        <p class="sx-sub" id="sx-sub">Checking with PayPal / Razorpay. Stay on this page — we’ll open your dashboard when Pro is unlocked.</p>
+        <h1 class="sx-title" id="sx-title">Confirming your payment</h1>
+        <p class="sx-sub" id="sx-sub">
+          Checking with your payment provider. Stay on this page — we’ll unlock Pro when verification succeeds.
+        </p>
 
-        <div class="sx-facts" aria-label="Plan details">
-          <div class="sx-fact">
-            <span class="sx-fact-ico" aria-hidden="true">✦</span>
-            <div>
-              <span class="sx-fact-label">Plan</span>
-              <span class="sx-fact-value" id="fact-plan">Yearly</span>
-            </div>
+        <div class="sx-rows" aria-label="Order details">
+          <div class="sx-row">
+            <span class="sx-row-label">Plan</span>
+            <span class="sx-row-value" id="fact-plan">Yearly</span>
           </div>
-          <div class="sx-fact">
-            <span class="sx-fact-ico" aria-hidden="true">✉</span>
-            <div>
-              <span class="sx-fact-label">Email</span>
-              <span class="sx-fact-value" id="fact-email">—</span>
-            </div>
+          <div class="sx-row">
+            <span class="sx-row-label">Email</span>
+            <span class="sx-row-value" id="fact-email">—</span>
           </div>
-          <div class="sx-fact">
-            <span class="sx-fact-ico" aria-hidden="true">◎</span>
-            <div>
-              <span class="sx-fact-label">Paid with</span>
-              <span class="sx-fact-value" id="fact-provider">—</span>
-            </div>
+          <div class="sx-row">
+            <span class="sx-row-label">Paid with</span>
+            <span class="sx-row-value" id="fact-provider">—</span>
           </div>
         </div>
+
+        <p class="sx-order" id="sx-order" hidden>
+          Order <strong id="fact-order">—</strong>
+        </p>
 
         <p class="sx-hint" id="hint">This usually takes a few seconds.</p>
 
         <div class="sx-actions">
-          <button type="button" class="sx-dash" id="dashBtn" disabled>
-            <svg class="sx-dash-wave" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="var(--m3-primary)" />
-                  <stop offset="50%" stop-color="var(--m3-secondary)" />
-                  <stop offset="100%" stop-color="var(--m3-tertiary)" />
-                </linearGradient>
-              </defs>
-              <path class="sx-dash-path" fill="none" stroke="url(#btnGrad)"
-                d="M18,32
-                   C40,12 70,52 100,32 C130,12 160,52 190,32 C220,12 250,52 280,32 C295,22 305,28 312,32
-                   C305,38 295,42 280,32 C250,12 220,52 190,32 C160,12 130,52 100,32 C70,12 40,52 18,32
-                   C12,36 10,40 8,32 C10,24 12,28 18,32 Z" />
-              <rect class="sx-dash-rect" x="3" y="3" width="314" height="58" rx="29" ry="29" fill="none" stroke="url(#btnGrad)" />
-            </svg>
-            <span class="sx-dash-inner">
-              <svg class="sx-dash-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-                <path d="M4 13h7V4H4v9zm0 7h7v-5H4v5zm9 0h7V11h-7v9zm0-16v5h7V4h-7z" fill="currentColor"/>
-              </svg>
-              <span id="dashBtnLabel">Waiting for confirmation…</span>
-            </span>
+          <button type="button" class="sx-btn sx-btn-primary" id="dashBtn" disabled>
+            <span id="dashBtnLabel">Waiting for confirmation…</span>
           </button>
-
-          <a class="sx-tonal-btn" id="homeBtn" href="/checkout.html">Back to checkout</a>
+          <a class="sx-btn-secondary" id="homeBtn" href="/checkout.html">Back to checkout</a>
         </div>
       </section>
     </div>
   </main>
 
-  <script src="/site-theme.js" defer></script>
   <script>
-    // Build 1.2.17 — stay here while verifying provider payment; dashboard only after is_pro
+    // Build 1.2.19 — verify on success; Material MD3 UI; restore PayPal session from stt_pp_order
     const p = new URLSearchParams(location.search);
     const stored = (() => {
       try { return JSON.parse(sessionStorage.getItem("stt_success_ctx") || "{}"); } catch { return {}; }
     })();
+    const ppStored = (() => {
+      try { return JSON.parse(sessionStorage.getItem("stt_pp_order") || "{}"); } catch { return {}; }
+    })();
 
-    let email = (p.get("email") || stored.email || "").trim().toLowerCase();
-    let cycle = p.get("cycle") || stored.cycle || "yearly";
-    let provider = (p.get("provider") || stored.provider || "").toLowerCase();
-    let userId = p.get("user_id") || stored.user_id || "";
+    let email = (p.get("email") || stored.email || ppStored.email || "").trim().toLowerCase();
+    let cycle = p.get("cycle") || stored.cycle || ppStored.cycle || "yearly";
+    let provider = (p.get("provider") || p.get("paid") || stored.provider || "").toLowerCase();
+    if (provider === "paypal" || p.get("paid") === "paypal") provider = "paypal";
+    let userId = p.get("user_id") || stored.user_id || ppStored.user_id || "";
     let paymentId = p.get("payment_id") || stored.payment_id || "";
-    let orderId = p.get("order_id") || p.get("token") || stored.order_id || "";
+    let orderId =
+      p.get("order_id") ||
+      p.get("token") ||
+      stored.order_id ||
+      ppStored.order_id ||
+      "";
     let signature = p.get("signature") || stored.signature || "";
-    let accessToken = stored.access_token || "";
+    let accessToken = stored.access_token || ppStored.access_token || "";
 
     function normalizeExtId(raw) {
       const id = String(raw || "").toLowerCase().replace(/[^a-p]/g, "");
@@ -185,7 +110,7 @@
       return id;
     }
 
-    let extId = normalizeExtId(p.get("ext_id") || stored.ext_id);
+    let extId = normalizeExtId(p.get("ext_id") || stored.ext_id || ppStored.ext_id);
     try {
       if (extId) localStorage.setItem("stt_ext_id", extId);
       else {
@@ -195,16 +120,49 @@
       }
     } catch {}
 
+    // Persist success ctx so refresh / retry keeps refs
+    try {
+      sessionStorage.setItem(
+        "stt_success_ctx",
+        JSON.stringify({
+          email,
+          cycle,
+          provider,
+          user_id: userId,
+          payment_id: paymentId,
+          order_id: orderId,
+          signature,
+          access_token: accessToken,
+          ext_id: extId,
+        }),
+      );
+    } catch {}
+
     const planNice = String(cycle).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     const payNice = provider
       ? String(provider).replace(/\b\w/g, (c) => c.toUpperCase())
       : "Checkout";
 
     document.getElementById("fact-plan").textContent = planNice;
-    document.getElementById("fact-email").textContent = email || "Your billing email";
+    const emailEl = document.getElementById("fact-email");
+    if (email) {
+      emailEl.innerHTML = "";
+      const a = document.createElement("a");
+      a.href = "mailto:" + email;
+      a.textContent = email;
+      emailEl.appendChild(a);
+    } else {
+      emailEl.textContent = "Your billing email";
+    }
     document.getElementById("fact-provider").textContent = payNice;
 
-    const chip = document.getElementById("sx-chip");
+    const orderWrap = document.getElementById("sx-order");
+    const orderRef = paymentId || orderId;
+    if (orderRef) {
+      orderWrap.hidden = false;
+      document.getElementById("fact-order").textContent = orderRef;
+    }
+
     const chipText = document.getElementById("sx-chip-text");
     const title = document.getElementById("sx-title");
     const sub = document.getElementById("sx-sub");
@@ -218,7 +176,7 @@
       if (copy.chip) chipText.textContent = copy.chip;
       if (copy.title) title.textContent = copy.title;
       if (copy.sub) sub.textContent = copy.sub;
-      if (copy.hint) hint.textContent = copy.hint;
+      if (copy.hint != null) hint.textContent = copy.hint;
       if (copy.btn) dashBtnLabel.textContent = copy.btn;
       document.title =
         state === "confirmed"
@@ -271,7 +229,6 @@
       });
       if (res?.ok) {
         hint.textContent = "Opening your dashboard…";
-        // Mark URL so extension tab listener can also hand off if messaging was slow
         try {
           const u = new URL(location.href);
           u.searchParams.set("verified", "1");
@@ -420,12 +377,10 @@
         chip: "Not confirmed yet",
         title: "We couldn’t confirm Pro yet",
         sub:
-          "Payment may still be processing, or verify failed. You remain on Free until Pro unlocks. Stay here and retry, or return to checkout with your payment id.",
-        hint: paymentId
-          ? "Payment id: " + paymentId
-          : orderId
-            ? "Order: " + orderId
-            : "No payment reference found — complete checkout again.",
+          "Payment may still be processing, or verification failed. You remain on Free until Pro unlocks. Stay here and retry, or return to checkout with your payment ID.",
+        hint: orderRef
+          ? "If you only logged into PayPal without tapping Pay Now, no charge was made — start checkout again."
+          : "No payment reference found — complete checkout again.",
         btn: "Retry verification",
       });
       dashBtn.disabled = false;
@@ -442,7 +397,6 @@
       }
     });
 
-    // Already marked verified in URL (refresh) → open dashboard
     if (p.get("verified") === "1" || p.get("handoff") === "1") {
       setState("confirmed", {
         chip: "Payment confirmed",

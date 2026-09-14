@@ -48,6 +48,7 @@ export default function handler(req, res) {
     },
     // Public key ids only (safe for Checkout.js / PayPal SDK) — never secrets
     paypal_client_id: pp.clientId || "",
+    paypal_is_sandbox: mode === "sandbox",
     razorpay_key_id: rz.keyId || "",
     allow_simulated_checkout: allowSimulatedCheckout(),
     site_url: siteUrl(),
