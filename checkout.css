@@ -441,7 +441,11 @@ html[data-visual="minimal"] .ck-btn {
 .ck-powered img {
   height: 18px;
   width: auto;
-  opacity: 0.9;
+  object-fit: contain;
+  padding: 6px 8px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e5e7eb);
 }
 .ck-status {
   margin-top: 14px;
