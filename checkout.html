@@ -168,6 +168,17 @@
     if (params.get("cancel") === "1") {
       setTimeout(() => setStatus("Payment cancelled. You’re still on Free — try again when ready.", "error"), 0);
     }
+    // PayPal sometimes returns users here after their hosted session expires
+    if (/session|timed?\s*out|expired|log\s*in\s*again/i.test(params.get("error") || params.get("message") || "")) {
+      setTimeout(
+        () =>
+          setStatus(
+            "PayPal’s checkout session expired. Tap Pay with PayPal again to start a fresh payment (don’t reuse an old tab).",
+            "error",
+          ),
+        0,
+      );
+    }
 
     function authHeaders() {
       const h = { "Content-Type": "application/json" };

@@ -1,5 +1,8 @@
 # Website changelog
 
+## 1.2.18 — 2026-09-14
+- **PayPal session timeout**: stop putting JWT `access_token` in PayPal `return_url` (breaks/looks like expired PayPal sessions); clearer checkout tip when PayPal session expires
+
 ## 1.2.17 — 2026-09-14
 - **Verify-on-success**: after PayPal/Razorpay pay → land on success page immediately; page verifies real provider payment, stays while verifying, then auto-opens dashboard only when `is_pro`
 

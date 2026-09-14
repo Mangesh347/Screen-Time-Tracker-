@@ -135,7 +135,8 @@ export default async function handler(req, res) {
       user_id: userId,
     });
     if (extId) returnQs.set("ext_id", extId);
-    if (body.access_token) returnQs.set("access_token", String(body.access_token).slice(0, 2000));
+    // Do NOT put access_token in return_url — long JWTs break PayPal redirects / look like expired sessions.
+    // Checkout restores the session from sessionStorage (stt_pp_order).
 
     const orderRes = await fetch(`${creds.apiBase}/v2/checkout/orders`, {
       method: "POST",
