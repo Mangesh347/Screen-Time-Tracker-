@@ -134,28 +134,27 @@ export function computeExpiresAt(cycle, from = new Date()) {
 }
 
 /**
- * Resolve sandbox vs live.
- * Priority: PAYMENT_TEST_MODE → MODE/PAYMENT_MODE/PAYPAL_MODE → ALLOW_LIVE_PAYMENTS → PAYPAL_TEST_* → sandbox.
+ * Resolve sandbox vs live (sandbox-first until explicit go-live).
+ *
+ * - PAYMENT_TEST_MODE=true|1|yes|on  → sandbox (always wins)
+ * - PAYMENT_TEST_MODE=false|0|no|off → live
+ * - unset → sandbox (ignores PAYPAL_MODE=live, ALLOW_LIVE_PAYMENTS, and LIVE_* keys)
+ *
+ * Presence of LIVE_* credentials never flips mode by itself.
  */
 export function paymentMode() {
   const ptm = process.env.PAYMENT_TEST_MODE;
   if (envTruthy(ptm)) return "sandbox";
   if (envFalsy(ptm)) return "live";
 
+  // Unset: always sandbox until PAYMENT_TEST_MODE=false.
+  // MODE / PAYPAL_MODE / ALLOW_LIVE_PAYMENTS are documentation / ops hints only when unset.
   const raw = String(
     process.env.MODE || process.env.PAYMENT_MODE || process.env.PAYPAL_MODE || "",
   )
     .trim()
     .toLowerCase();
   if (raw === "sandbox" || raw === "test") return "sandbox";
-  if (raw === "live" || raw === "production") return "live";
-
-  if (envTruthy(process.env.ALLOW_LIVE_PAYMENTS)) return "live";
-
-  // Safe default for current Vercel setup: test PayPal keys present → sandbox
-  if (process.env.PAYPAL_TEST_CLIENT_ID || process.env.PAYPAL_TEST_CLIENT_SECRET) {
-    return "sandbox";
-  }
 
   return "sandbox";
 }
@@ -241,13 +240,16 @@ export function razorpayCredentials() {
       keySecretVar: secret.name || "RAZORPAY_LIVE_KEY_SECRET",
     };
   }
+  // Sandbox: prefer TEST_* ; only fall back to RAZORPAY_KEY_* if it looks like test (rzp_test_)
+  const legacyId = String(process.env.RAZORPAY_KEY_ID || "").trim();
+  const legacyOk = /^rzp_test_/i.test(legacyId);
   const id = firstFilled(
     [process.env.RAZORPAY_TEST_KEY_ID, "RAZORPAY_TEST_KEY_ID"],
-    [process.env.RAZORPAY_KEY_ID, "RAZORPAY_KEY_ID"],
+    [legacyOk ? legacyId : "", "RAZORPAY_KEY_ID"],
   );
   const secret = firstFilled(
     [process.env.RAZORPAY_TEST_KEY_SECRET, "RAZORPAY_TEST_KEY_SECRET"],
-    [process.env.RAZORPAY_KEY_SECRET, "RAZORPAY_KEY_SECRET"],
+    [legacyOk ? process.env.RAZORPAY_KEY_SECRET : "", "RAZORPAY_KEY_SECRET"],
   );
   return {
     mode,

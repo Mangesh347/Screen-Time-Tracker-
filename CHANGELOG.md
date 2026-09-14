@@ -1,5 +1,11 @@
 # Website changelog
 
+## 1.2.9 — 2026-09-14
+- **Sandbox-first payments**: `paymentMode()` defaults to sandbox when `PAYMENT_TEST_MODE` unset; live only if `PAYMENT_TEST_MODE=false`
+- Razorpay sandbox ignores `rzp_live_*` legacy `RAZORPAY_KEY_*` fallbacks (avoids accidental live keys)
+- Added `PAYMENT_MODE.md` — exact Vercel TEST-now / LIVE-later vars
+- Redeploy + set `PAYMENT_TEST_MODE=true`, `PAYPAL_MODE=sandbox`, `ALLOW_LIVE_PAYMENTS=false` + TEST secrets
+
 ## 1.2.8 — 2026-09-13
 - Social API: reject `send_message` for non-Pro (`PRO_REQUIRED` / 403) via `resolveIsPro`
 - `/api/stt/pro-check`: add `messaging`, `history30`, `history90`; remove `petDesktop`

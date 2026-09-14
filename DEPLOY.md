@@ -79,11 +79,11 @@ After saving env vars → **Redeploy**.
 
 ### Mode resolution (server)
 
-1. `PAYMENT_TEST_MODE` true → sandbox; false → live  
-2. Else `MODE` / `PAYMENT_MODE` / `PAYPAL_MODE` = sandbox\|test\|live  
-3. Else `ALLOW_LIVE_PAYMENTS=true` → live  
-4. Else if `PAYPAL_TEST_*` present → sandbox  
-5. Default → sandbox  
+1. `PAYMENT_TEST_MODE` true → sandbox; **false → live** (only way to go live)  
+2. Unset → **sandbox** (ignores `PAYPAL_MODE=live`, `ALLOW_LIVE_PAYMENTS`, and LIVE keys alone)  
+3. `MODE` / `PAYPAL_MODE=sandbox|test` → sandbox (when unset)  
+
+See **`PAYMENT_MODE.md`** for exact TEST-now / LIVE-later Vercel values.
 
 Missing provider keys return **503** with `missing_env: ["VAR_NAME", …]`.  
 If `ALLOW_SIMULATED_CHECKOUT=true`, create-order may return `mode: "simulated_preview"` (`SIM_*` ids). Capture/verify unlocks Pro for those **only** when that flag is on.
