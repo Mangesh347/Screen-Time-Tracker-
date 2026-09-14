@@ -389,8 +389,41 @@ html, body { margin: 0; min-height: 100%; }
   display: block;
   width: min(100%, 300px);
   text-decoration: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
   border-radius: 999px;
   isolation: isolate;
+}
+.sx-dash:disabled {
+  cursor: wait;
+  opacity: 0.88;
+}
+.sx-dash:disabled:hover .sx-dash-inner {
+  transform: none;
+}
+body[data-sx-state="verifying"] .sx-chip {
+  color: var(--m3-on-secondary-container);
+  background: var(--m3-secondary-container);
+}
+body[data-sx-state="verifying"] .sx-chip-pulse {
+  background: var(--m3-secondary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--m3-secondary) 28%, transparent);
+}
+body[data-sx-state="failed"] .sx-chip {
+  color: #5c1a1a;
+  background: #ffdad6;
+}
+body[data-sx-state="failed"] .sx-chip-pulse {
+  background: #ba1a1a;
+  animation: none;
+}
+body[data-sx-state="confirmed"] .sx-chip {
+  color: var(--m3-on-primary-container);
+  background: var(--m3-tertiary-container);
 }
 .sx-dash-wave {
   position: absolute;

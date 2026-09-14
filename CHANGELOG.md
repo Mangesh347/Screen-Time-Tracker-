@@ -1,5 +1,8 @@
 # Website changelog
 
+## 1.2.17 — 2026-09-14
+- **Verify-on-success**: after PayPal/Razorpay pay → land on success page immediately; page verifies real provider payment, stays while verifying, then auto-opens dashboard only when `is_pro`
+
 ## 1.2.16 — 2026-09-14
 - **Vercel Hobby cron**: expire-subscriptions schedule `0 * * * *` → `0 3 * * *` (once daily UTC) so Hobby deploy succeeds
 

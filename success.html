@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-  <meta name="stt-build" content="1.2.15" />
-  <title>You're Pro — Screen Time Tracker</title>
-  <meta name="description" content="Welcome to Screen Time Tracker Pro. Your plan is active on your billing email." />
+  <meta name="stt-build" content="1.2.17" />
+  <title>Confirming payment — Screen Time Tracker</title>
+  <meta name="description" content="Confirming your Screen Time Tracker Pro payment." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
   <script>
@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="/theme-tokens.css" />
   <link rel="stylesheet" href="/success.css" />
 </head>
-<body class="sx-page">
+<body class="sx-page" data-sx-state="verifying">
   <div class="sx-ambient" aria-hidden="true">
     <span class="sx-blob sx-blob-a"></span>
     <span class="sx-blob sx-blob-b"></span>
@@ -42,7 +42,6 @@
 
   <main class="sx-shell">
     <div class="sx-frame">
-      <!-- Continuous moving wavy border around the card -->
       <svg class="sx-frame-wave" viewBox="0 0 440 640" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -59,7 +58,7 @@
              C10,400 22,340 12,280 C4,220 18,160 14,100 C12,60 22,34 40,28 Z" />
       </svg>
 
-      <section class="sx-card" aria-labelledby="sx-title">
+      <section class="sx-card" aria-labelledby="sx-title" aria-live="polite">
         <div class="sx-tonal-top" aria-hidden="true"></div>
 
         <div class="sx-hero">
@@ -88,22 +87,22 @@
             </svg>
             <div class="sx-logo">
               <img src="/brand-mark.png" width="72" height="72" alt="" />
-              <span class="sx-check" title="Pro active" aria-hidden="true">
+              <span class="sx-check" id="sx-check" title="Status" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                  <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path id="sx-check-path" d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
             </div>
           </div>
         </div>
 
-        <p class="sx-chip">
+        <p class="sx-chip" id="sx-chip">
           <span class="sx-chip-pulse" aria-hidden="true"></span>
-          Payment received
+          <span id="sx-chip-text">Verifying payment…</span>
         </p>
 
-        <h1 id="sx-title">Welcome to Pro</h1>
-        <p class="sx-sub" id="sx-sub">Your plan is active. Head back to your dashboard anytime.</p>
+        <h1 id="sx-title">Confirming your payment</h1>
+        <p class="sx-sub" id="sx-sub">Checking with PayPal / Razorpay. Stay on this page — we’ll open your dashboard when Pro is unlocked.</p>
 
         <div class="sx-facts" aria-label="Plan details">
           <div class="sx-fact">
@@ -129,11 +128,10 @@
           </div>
         </div>
 
-        <p class="sx-hint" id="hint">Open Screen Time Tracker and sign in with this email to see Pro.</p>
+        <p class="sx-hint" id="hint">This usually takes a few seconds.</p>
 
         <div class="sx-actions">
-          <!-- Primary: wavy-border Material You dashboard button -->
-          <a class="sx-dash" id="dashBtn" href="#dashboard">
+          <button type="button" class="sx-dash" id="dashBtn" disabled>
             <svg class="sx-dash-wave" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -153,11 +151,11 @@
               <svg class="sx-dash-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
                 <path d="M4 13h7V4H4v9zm0 7h7v-5H4v5zm9 0h7V11h-7v9zm0-16v5h7V4h-7z" fill="currentColor"/>
               </svg>
-              Back to dashboard
+              <span id="dashBtnLabel">Waiting for confirmation…</span>
             </span>
-          </a>
+          </button>
 
-          <a class="sx-tonal-btn" id="homeBtn" href="/">Back to home</a>
+          <a class="sx-tonal-btn" id="homeBtn" href="/checkout.html">Back to checkout</a>
         </div>
       </section>
     </div>
@@ -165,150 +163,298 @@
 
   <script src="/site-theme.js" defer></script>
   <script>
-    // Build 1.2.15 — NEVER navigate to chrome-extension:// (Chrome → chrome-extension://invalid/)
+    // Build 1.2.17 — stay here while verifying provider payment; dashboard only after is_pro
     const p = new URLSearchParams(location.search);
-    const email = (p.get('email') || '').trim().toLowerCase();
-    const cycle = p.get('cycle') || 'yearly';
-    const provider = p.get('provider') || '';
-    const userId = p.get('user_id') || '';
-    const isPro = p.get('is_pro') !== '0';
+    const stored = (() => {
+      try { return JSON.parse(sessionStorage.getItem("stt_success_ctx") || "{}"); } catch { return {}; }
+    })();
 
-    /** Chrome extension IDs are exactly 32 chars from a–p. Reject "invalid" / garbage. */
+    let email = (p.get("email") || stored.email || "").trim().toLowerCase();
+    let cycle = p.get("cycle") || stored.cycle || "yearly";
+    let provider = (p.get("provider") || stored.provider || "").toLowerCase();
+    let userId = p.get("user_id") || stored.user_id || "";
+    let paymentId = p.get("payment_id") || stored.payment_id || "";
+    let orderId = p.get("order_id") || p.get("token") || stored.order_id || "";
+    let signature = p.get("signature") || stored.signature || "";
+    let accessToken = stored.access_token || "";
+
     function normalizeExtId(raw) {
-      const id = String(raw || '').toLowerCase().replace(/[^a-p]/g, '');
-      if (id.length !== 32) return '';
-      if (id === 'invalid' || id.includes('invalid')) return '';
+      const id = String(raw || "").toLowerCase().replace(/[^a-p]/g, "");
+      if (id.length !== 32) return "";
+      if (id === "invalid" || id.includes("invalid")) return "";
       return id;
     }
 
-    let extId = normalizeExtId(p.get('ext_id'));
+    let extId = normalizeExtId(p.get("ext_id") || stored.ext_id);
     try {
-      if (extId) {
-        localStorage.setItem('stt_ext_id', extId);
-      } else {
-        const stored = normalizeExtId(localStorage.getItem('stt_ext_id'));
-        if (stored) extId = stored;
-        else localStorage.removeItem('stt_ext_id');
+      if (extId) localStorage.setItem("stt_ext_id", extId);
+      else {
+        const s = normalizeExtId(localStorage.getItem("stt_ext_id"));
+        if (s) extId = s;
+        else localStorage.removeItem("stt_ext_id");
       }
-      // Wipe legacy bad values that caused chrome-extension://invalid/
-      const bad = String(localStorage.getItem('stt_ext_id') || '');
-      if (!normalizeExtId(bad)) localStorage.removeItem('stt_ext_id');
     } catch {}
 
-    const planNice = String(cycle).replace(/_/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
+    const planNice = String(cycle).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     const payNice = provider
-      ? String(provider).replace(/\b\w/g, c => c.toUpperCase())
-      : 'Checkout';
+      ? String(provider).replace(/\b\w/g, (c) => c.toUpperCase())
+      : "Checkout";
 
-    document.getElementById('fact-plan').textContent = planNice;
-    document.getElementById('fact-email').textContent = email || 'Your billing email';
-    document.getElementById('fact-provider').textContent = payNice;
+    document.getElementById("fact-plan").textContent = planNice;
+    document.getElementById("fact-email").textContent = email || "Your billing email";
+    document.getElementById("fact-provider").textContent = payNice;
 
-    const sub = document.getElementById('sx-sub');
-    const hint = document.getElementById('hint');
-    const dashBtn = document.getElementById('dashBtn');
+    const chip = document.getElementById("sx-chip");
+    const chipText = document.getElementById("sx-chip-text");
+    const title = document.getElementById("sx-title");
+    const sub = document.getElementById("sx-sub");
+    const hint = document.getElementById("hint");
+    const dashBtn = document.getElementById("dashBtn");
+    const dashBtnLabel = document.getElementById("dashBtnLabel");
+    const homeBtn = document.getElementById("homeBtn");
+
+    function setState(state, copy) {
+      document.body.dataset.sxState = state;
+      if (copy.chip) chipText.textContent = copy.chip;
+      if (copy.title) title.textContent = copy.title;
+      if (copy.sub) sub.textContent = copy.sub;
+      if (copy.hint) hint.textContent = copy.hint;
+      if (copy.btn) dashBtnLabel.textContent = copy.btn;
+      document.title =
+        state === "confirmed"
+          ? "You're Pro — Screen Time Tracker"
+          : state === "failed"
+            ? "Payment not confirmed — Screen Time Tracker"
+            : "Confirming payment — Screen Time Tracker";
+    }
+
+    function authHeaders() {
+      const h = { "Content-Type": "application/json", Accept: "application/json" };
+      if (accessToken) h.Authorization = "Bearer " + accessToken;
+      return h;
+    }
 
     function pingExtension(payload) {
-      return new Promise(resolve => {
-        if (!extId || typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
-          resolve({ ok: false, error: 'no_runtime' });
+      return new Promise((resolve) => {
+        if (!extId || typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
+          resolve({ ok: false, error: "no_runtime" });
           return;
         }
         try {
           chrome.runtime.sendMessage(extId, payload, function (res) {
             const err = chrome.runtime.lastError;
             if (err) {
-              resolve({ ok: false, error: err.message || 'lastError' });
+              resolve({ ok: false, error: err.message || "lastError" });
               return;
             }
             resolve(res || { ok: false });
           });
         } catch (e) {
-          resolve({ ok: false, error: e.message || 'send_failed' });
+          resolve({ ok: false, error: e.message || "send_failed" });
         }
       });
     }
 
     async function openDashboard() {
+      dashBtn.disabled = false;
       const res = await pingExtension({
-        type: 'STT_OPEN_DASHBOARD',
-        hash: 'pro',
+        type: "STT_OPEN_DASHBOARD",
+        hash: "pro",
         refresh: true,
+        open: true,
+        replaceTab: true,
         email,
         cycle,
         provider,
         user_id: userId,
+        is_pro: true,
       });
       if (res?.ok) {
-        hint.textContent = 'Dashboard opened in a new tab.';
-        hint.classList.remove('sx-hint-flash');
+        hint.textContent = "Opening your dashboard…";
+        // Mark URL so extension tab listener can also hand off if messaging was slow
+        try {
+          const u = new URL(location.href);
+          u.searchParams.set("verified", "1");
+          u.searchParams.set("handoff", "1");
+          u.searchParams.delete("pending");
+          history.replaceState(null, "", u.toString());
+        } catch {}
         return true;
       }
       hint.textContent =
-        'Open Screen Time Tracker from Chrome’s toolbar → Dashboard. Sign in with this billing email to see Pro.';
-      hint.classList.add('sx-hint-flash');
+        "Pro is unlocked. Open Screen Time Tracker from Chrome’s toolbar → Dashboard.";
+      dashBtnLabel.textContent = "Open dashboard";
       return false;
     }
 
-    // Hard lock: never put chrome-extension URLs in href (blocks + invalid ID)
-    dashBtn.removeAttribute('href');
-    dashBtn.setAttribute('role', 'button');
-    dashBtn.setAttribute('tabindex', '0');
-    dashBtn.addEventListener('click', function (ev) {
-      ev.preventDefault();
-      openDashboard();
-    });
-    dashBtn.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter' || ev.key === ' ') {
-        ev.preventDefault();
+    async function checkAccess() {
+      if (!email) return null;
+      const url = "/api/stt/access?product=stt&email=" + encodeURIComponent(email);
+      const res = await fetch(url, { headers: authHeaders() });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.is_pro === true) return data;
+      return null;
+    }
+
+    async function verifyRazorpay() {
+      if (!paymentId) return null;
+      if (signature && orderId) {
+        const res = await fetch("/api/razorpay/verify-payment", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            razorpay_payment_id: paymentId,
+            razorpay_order_id: orderId,
+            razorpay_signature: signature,
+            email,
+            cycle,
+            user_id: userId || undefined,
+            access_token: accessToken || undefined,
+            ext_id: extId || undefined,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.is_pro === true) return data;
+      }
+      const claim = await fetch("/api/razorpay/claim-payment", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          payment_id: paymentId,
+          order_id: orderId || undefined,
+          email,
+          cycle,
+          user_id: userId || undefined,
+          access_token: accessToken || undefined,
+          ext_id: extId || undefined,
+        }),
+      });
+      const c = await claim.json().catch(() => ({}));
+      if (claim.ok && c.success && c.is_pro === true) return c;
+      return null;
+    }
+
+    async function verifyPaypal() {
+      if (!orderId) return null;
+      const res = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          order_id: orderId,
+          email,
+          cycle,
+          user_id: userId || undefined,
+          access_token: accessToken || undefined,
+          ext_id: extId || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && data.is_pro === true) return data;
+      return null;
+    }
+
+    async function runVerification() {
+      setState("verifying", {
+        chip: "Verifying payment…",
+        title: "Confirming your payment",
+        sub:
+          "Checking with " +
+          (payNice || "your payment provider") +
+          ". Stay on this page — dashboard opens only after Pro is unlocked.",
+        hint: "This usually takes a few seconds.",
+        btn: "Waiting for confirmation…",
+      });
+      dashBtn.disabled = true;
+
+      let confirmed = null;
+      const maxAttempts = 8;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        hint.textContent =
+          i === 0
+            ? "Contacting " + (payNice || "provider") + "…"
+            : "Still confirming… (" + (i + 1) + "/" + maxAttempts + ")";
+
+        try {
+          if (provider === "razorpay" || paymentId) {
+            confirmed = await verifyRazorpay();
+          } else if (provider === "paypal" || orderId) {
+            confirmed = await verifyPaypal();
+          }
+          if (!confirmed) confirmed = await checkAccess();
+        } catch (e) {
+          hint.textContent = (e && e.message) || "Network blip — retrying…";
+        }
+
+        if (confirmed && confirmed.is_pro === true) break;
+        await new Promise((r) => setTimeout(r, 1500 + i * 400));
+      }
+
+      if (confirmed && confirmed.is_pro === true) {
+        if (confirmed.email) email = confirmed.email;
+        if (confirmed.cycle || confirmed.plan) cycle = confirmed.cycle || confirmed.plan;
+        if (confirmed.provider) provider = confirmed.provider;
+        if (confirmed.user_id) userId = confirmed.user_id;
+        document.getElementById("fact-plan").textContent = String(cycle)
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        document.getElementById("fact-provider").textContent = String(provider || payNice)
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        setState("confirmed", {
+          chip: "Payment confirmed",
+          title: "Welcome to Pro",
+          sub: "Pro is unlocked on this email. Opening your dashboard…",
+          hint: "Almost done — handoff to the extension.",
+          btn: "Opening dashboard…",
+        });
+        try {
+          sessionStorage.removeItem("stt_pp_order");
+          sessionStorage.removeItem("stt_rzp_order");
+        } catch {}
+        await openDashboard();
+        return;
+      }
+
+      setState("failed", {
+        chip: "Not confirmed yet",
+        title: "We couldn’t confirm Pro yet",
+        sub:
+          "Payment may still be processing, or verify failed. You remain on Free until Pro unlocks. Stay here and retry, or return to checkout with your payment id.",
+        hint: paymentId
+          ? "Payment id: " + paymentId
+          : orderId
+            ? "Order: " + orderId
+            : "No payment reference found — complete checkout again.",
+        btn: "Retry verification",
+      });
+      dashBtn.disabled = false;
+      homeBtn.href = "/checkout.html" + (email ? "?email=" + encodeURIComponent(email) : "");
+    }
+
+    dashBtn.addEventListener("click", function () {
+      if (document.body.dataset.sxState === "failed") {
+        runVerification();
+        return;
+      }
+      if (document.body.dataset.sxState === "confirmed") {
         openDashboard();
       }
     });
 
-    if (isPro) {
-      sub.textContent = 'Pro is ready. You’re on the success page — open your dashboard below.';
-      hint.textContent = extId
-        ? 'Tap Back to dashboard to open the extension (safe handoff — no blocked links).'
-        : 'Open Screen Time Tracker from the toolbar, then Dashboard — Pro is on this email.';
-      // Instant handoff: extension switches this tab → dashboard (no chrome-extension:// navigation)
-      if (extId) {
-        pingExtension({
-          type: 'STT_OPEN_DASHBOARD',
-          hash: 'pro',
-          refresh: true,
-          open: true,
-          replaceTab: true,
-          email,
-          cycle,
-          provider,
-          user_id: userId,
-          is_pro: true,
-        }).then(res => {
-          if (res?.ok) {
-            hint.textContent = 'Opening dashboard…';
-          }
-        });
-      }
+    // Already marked verified in URL (refresh) → open dashboard
+    if (p.get("verified") === "1" || p.get("handoff") === "1") {
+      setState("confirmed", {
+        chip: "Payment confirmed",
+        title: "Welcome to Pro",
+        sub: "Pro is ready. Opening your dashboard…",
+        hint: "",
+        btn: "Open dashboard",
+      });
+      openDashboard();
     } else {
-      sub.textContent = 'We could not confirm Pro on this visit.';
-      hint.textContent = 'Return to checkout and complete payment — you remain on Free until Pro unlocks.';
+      runVerification();
     }
-
-    try {
-      localStorage.setItem('stt_checkout_success', JSON.stringify({
-        email, cycle, provider, ext_id: extId, user_id: userId, at: Date.now(), is_pro: isPro, build: '1.2.15',
-      }));
-    } catch {}
-
-    try {
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({
-          type: 'STT_CHECKOUT_SUCCESS',
-          email, cycle, provider, user_id: userId, is_pro: isPro,
-        }, '*');
-      }
-    } catch {}
   </script>
 </body>
 </html>
