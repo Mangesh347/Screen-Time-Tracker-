@@ -1,5 +1,8 @@
 # Website changelog
 
+## 1.2.22 — 2026-09-14
+- Real PayPal + Razorpay logos on checkout and homepage footer; PayPal listed first
+
 ## 1.2.21 — 2026-09-14
 - **Live payments default**: `paymentMode()` returns live unless `PAYMENT_TEST_MODE=true`
 - **New pricing**: $3.99 / $29.99 / $79.99 (INR ₹380 / ₹2,853 / ₹7,609 at FX 95.12)
