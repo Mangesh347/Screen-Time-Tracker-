@@ -1,5 +1,10 @@
 # Website changelog
 
+## 1.2.21 — 2026-09-14
+- **Live payments default**: `paymentMode()` returns live unless `PAYMENT_TEST_MODE=true`
+- **New pricing**: $3.99 / $29.99 / $79.99 (INR ₹380 / ₹2,853 / ₹7,609 at FX 95.12)
+- **Checkout copy**: clearer, friendlier wording (no sandbox lecture on live)
+
 ## 1.2.20 — 2026-09-14
 - **Success UI**: Material You expressive polish — ambient tonal blobs, circular progress around logo, linear indeterminate bar, staggered entrances, state-colored wavy border, pill buttons with state-layer ripple, success pop / fail shake
 

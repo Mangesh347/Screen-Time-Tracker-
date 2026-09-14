@@ -31,7 +31,7 @@ const PLAN_DEFS = {
   monthly: {
     id: "monthly",
     name: "Pro Monthly",
-    priceUSD: 4.99,
+    priceUSD: 3.99,
     days: 30,
     durationLabel: "30 days",
     desc: "Screen Time Tracker Pro — Monthly",
@@ -39,7 +39,7 @@ const PLAN_DEFS = {
   quarterly: {
     id: "quarterly",
     name: "Pro 3 Months",
-    priceUSD: 12.99,
+    priceUSD: 10.99,
     days: 90,
     durationLabel: "90 days",
     desc: "Screen Time Tracker Pro — 3 Months",
@@ -47,7 +47,7 @@ const PLAN_DEFS = {
   yearly: {
     id: "yearly",
     name: "Pro Yearly",
-    priceUSD: 39,
+    priceUSD: 29.99,
     days: 365,
     durationLabel: "365 days",
     desc: "Screen Time Tracker Pro — Yearly",
@@ -55,7 +55,7 @@ const PLAN_DEFS = {
   years_2: {
     id: "years_2",
     name: "Pro 2 Years",
-    priceUSD: 69,
+    priceUSD: 54.99,
     days: 730,
     durationLabel: "730 days",
     desc: "Screen Time Tracker Pro — 2 Years",
@@ -63,7 +63,7 @@ const PLAN_DEFS = {
   lifetime: {
     id: "lifetime",
     name: "Pro Lifetime",
-    priceUSD: 79,
+    priceUSD: 79.99,
     days: null,
     durationLabel: "lifetime",
     desc: "Screen Time Tracker Pro — Lifetime",
@@ -134,21 +134,18 @@ export function computeExpiresAt(cycle, from = new Date()) {
 }
 
 /**
- * Resolve sandbox vs live (sandbox-first until explicit go-live).
+ * Resolve sandbox vs live (live by default for production checkout).
  *
  * - PAYMENT_TEST_MODE=true|1|yes|on  → sandbox (always wins)
  * - PAYMENT_TEST_MODE=false|0|no|off → live
- * - unset → sandbox (ignores PAYPAL_MODE=live, ALLOW_LIVE_PAYMENTS, and LIVE_* keys)
- *
- * Presence of LIVE_* credentials never flips mode by itself.
+ * - unset → live (use PAYMENT_TEST_MODE=true only when you need sandbox)
+ * - MODE / PAYPAL_MODE = sandbox|test → sandbox when PAYMENT_TEST_MODE unset
  */
 export function paymentMode() {
   const ptm = process.env.PAYMENT_TEST_MODE;
   if (envTruthy(ptm)) return "sandbox";
   if (envFalsy(ptm)) return "live";
 
-  // Unset: always sandbox until PAYMENT_TEST_MODE=false.
-  // MODE / PAYPAL_MODE / ALLOW_LIVE_PAYMENTS are documentation / ops hints only when unset.
   const raw = String(
     process.env.MODE || process.env.PAYMENT_MODE || process.env.PAYPAL_MODE || "",
   )
@@ -156,7 +153,7 @@ export function paymentMode() {
     .toLowerCase();
   if (raw === "sandbox" || raw === "test") return "sandbox";
 
-  return "sandbox";
+  return "live";
 }
 
 export function allowSimulatedCheckout() {

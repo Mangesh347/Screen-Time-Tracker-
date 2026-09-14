@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout — Screen Time Tracker Pro</title>
-  <meta name="description" content="Upgrade to Screen Time Tracker Pro. Secure checkout from $4.99/mo." />
+  <meta name="description" content="Upgrade to Screen Time Tracker Pro. Secure checkout from $3.99/mo." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
   <script>
@@ -28,23 +28,23 @@
 <body class="ck-body">
   <div class="ck-shell" id="checkoutShell">
     <aside class="ck-left" aria-label="Order summary">
-      <a class="ck-back" href="/">Back to home</a>
+      <a class="ck-back" href="/">Home</a>
       <div class="ck-brand"><span class="ck-brand-mark"><img src="/brand-mark.png" width="28" height="28" alt="" /></span> Screen Time Tracker</div>
-      <p class="ck-kicker">Upgrade to Screen Time Tracker Pro</p>
-      <p class="ck-price-hero" id="heroPrice">$46.02 per year</p>
+      <p class="ck-kicker">Get Pro and take back your focus</p>
+      <p class="ck-price-hero" id="heroPrice">$35.39 per year</p>
 
-      <div class="ck-test on ck-trust" id="testBanner">Loading payment mode…</div>
+      <div class="ck-test on ck-trust" id="testBanner">Checking checkout…</div>
 
       <div class="ck-currency" role="group" aria-label="Currency">
         <button type="button" class="active" data-currency="USD" id="curUSD">USD</button>
         <button type="button" data-currency="INR" id="curINR">INR</button>
       </div>
-      <p class="ck-fx-note" id="fxNote">Plans: $4.99 / $39 / $79 · INR tax included via FX.</p>
+      <p class="ck-fx-note" id="fxNote">$3.99 / mo · $29.99 / yr · $79.99 lifetime. INR uses FX ₹95.12 per USD.</p>
 
       <div class="ck-plan-pills" role="tablist" aria-label="Billing cycle">
-        <button type="button" data-cycle="monthly" data-label-usd="Monthly · $4.99" data-label-inr="Monthly · ₹475">Monthly · $4.99</button>
-        <button type="button" class="active" data-cycle="yearly" data-label-usd="Yearly · $39" data-label-inr="Yearly · ₹3,710">Yearly · $39</button>
-        <button type="button" data-cycle="lifetime" data-label-usd="Lifetime · $79" data-label-inr="Lifetime · ₹7,514">Lifetime · $79</button>
+        <button type="button" data-cycle="monthly" data-label-usd="Monthly · $3.99" data-label-inr="Monthly · ₹380">Monthly · $3.99</button>
+        <button type="button" class="active" data-cycle="yearly" data-label-usd="Yearly · $29.99" data-label-inr="Yearly · ₹2,853">Yearly · $29.99</button>
+        <button type="button" data-cycle="lifetime" data-label-usd="Lifetime · $79.99" data-label-inr="Lifetime · ₹7,609">Lifetime · $79.99</button>
       </div>
 
       <div class="ck-product">
@@ -52,12 +52,12 @@
           <div class="ck-product-ico"><img src="/brand-mark.png" width="40" height="40" alt="" /></div>
           <div style="flex:1">
             <h2>Screen Time Tracker Pro</h2>
-            <p>Hard Lock, unlimited limits, 90-day history, schedules, sync &amp; deep cleaner. Bound to your billing email.</p>
+            <p>Hard Lock, unlimited limits, longer history, schedules, sync, and deep cleaner. Unlocks on the email you enter below.</p>
           </div>
-          <div class="ck-product-price" id="productPrice">$39.00</div>
+          <div class="ck-product-price" id="productPrice">$29.99</div>
         </div>
         <div class="ck-annual">
-          <span id="annualHint">Yearly saves versus paying monthly</span>
+          <span id="annualHint">Yearly is the smart pick · about $2.50 / month</span>
           <label class="ck-switch" title="Toggle yearly">
             <input type="checkbox" id="annualToggle" checked />
             <span></span>
@@ -66,9 +66,9 @@
       </div>
 
       <div class="ck-breakdown">
-        <div class="ck-row"><span>Subtotal</span><strong id="rowSubtotal">$39.00</strong></div>
-        <div class="ck-row"><span id="taxLabel">GST (18%)</span><strong id="rowGst">$7.02</strong></div>
-        <div class="ck-row total"><span>Total due today</span><strong id="rowTotal">$46.02</strong></div>
+        <div class="ck-row"><span>Subtotal</span><strong id="rowSubtotal">$29.99</strong></div>
+        <div class="ck-row"><span id="taxLabel">GST (18%)</span><strong id="rowGst">$5.40</strong></div>
+        <div class="ck-row total"><span>Total due today</span><strong id="rowTotal">$35.39</strong></div>
       </div>
     </aside>
 
@@ -79,7 +79,7 @@
         <button type="button" class="visual-chip" data-visual-set="minimal" aria-pressed="false">Minimal</button>
         <button type="button" class="mode-toggle" data-mode-toggle aria-label="Toggle dark mode">☾</button>
       </div>
-      <h1>Payment details</h1>
+      <h1>How would you like to pay?</h1>
 
       <div class="ck-express">
         <button type="button" class="ck-btn ck-btn-paypal" id="payPaypal" aria-label="Pay with PayPal">
@@ -90,24 +90,24 @@
         </button>
       </div>
 
-      <div class="ck-or">OR</div>
+      <div class="ck-or">or pay with card / UPI</div>
 
-      <label class="ck-label" for="buyerEmail">Contact information</label>
-      <input class="ck-input" id="buyerEmail" type="email" autocomplete="email" placeholder="Billing email for Pro activation" required />
+      <label class="ck-label" for="buyerEmail">Billing email</label>
+      <input class="ck-input" id="buyerEmail" type="email" autocomplete="email" placeholder="The email you use in the extension" required />
 
-      <label class="ck-label">Card via Razorpay</label>
+      <label class="ck-label">Card or UPI (Razorpay)</label>
       <div class="ck-card-box">
-        <strong>Secure card / UPI form</strong><br />Card details stay on Razorpay — never on our servers.
+        <strong>Opens a secure Razorpay window</strong><br />Your card details stay with Razorpay. We never see them.
       </div>
 
-      <button type="button" class="ck-btn ck-btn-dark" id="payCard">Subscribe with card</button>
+      <button type="button" class="ck-btn ck-btn-dark" id="payCard">Continue with card / UPI</button>
 
       <p class="ck-status" id="statusMsg" role="status"></p>
-      <p class="ck-legal" style="opacity:.55;font-size:11px;margin-top:8px">Checkout build 1.2.10 · pay→verify→Pro</p>
+      <p class="ck-legal" style="opacity:.55;font-size:11px;margin-top:8px">Checkout 1.2.21 · pay, verify, then Pro unlocks</p>
 
       <p class="ck-legal">
-        By confirming, you authorize Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor) to charge this payment method for the selected Screen Time Tracker Pro plan.
-        Monthly/yearly Pro ends on the stated date unless renewed. Lifetime is one-time.
+        By paying, you let Fenwick Labs (Mangesh Madhavrao Lokade, sole proprietor) charge this method for the Pro plan you picked.
+        Monthly and yearly end on their renewal date unless you renew. Lifetime is a one time purchase.
         <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="refund.html">Refunds</a>
       </p>
       <div class="ck-powered">
@@ -122,7 +122,7 @@
   <script>
     const GST = 0.18;
     let INR_USD_RATE = 95.12;
-    const USD = { monthly: 4.99, yearly: 39, lifetime: 79 };
+    const USD = { monthly: 3.99, yearly: 29.99, lifetime: 79.99 };
     let INR = {
       monthly: Math.round(USD.monthly * INR_USD_RATE),
       yearly: Math.round(USD.yearly * INR_USD_RATE),
@@ -247,14 +247,14 @@
       document.getElementById("curUSD").classList.toggle("active", currency === "USD");
       document.getElementById("curINR").classList.toggle("active", currency === "INR");
       document.getElementById("annualHint").textContent =
-        cycle === "yearly" ? "Best value — save versus paying monthly" :
-        cycle === "lifetime" ? "Pay once · keep Pro on this email" :
-        "Billed monthly · renew before expiry to continue";
+        cycle === "yearly" ? "Smart pick · about $2.50 per month" :
+        cycle === "lifetime" ? "Pay once and keep Pro on this email" :
+        "Flexible month to month";
       const fx = document.getElementById("fxNote");
       if (fx) {
         fx.textContent = currency === "INR"
-          ? `INR list: ₹${INR.monthly} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} · FX ₹${INR_USD_RATE}/USD · tax included`
-          : `USD $4.99 / $39 / $79 · INR ₹${INR.monthly} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} (FX ₹${INR_USD_RATE}/USD). Tax shown below for USD.`;
+          ? `INR prices: ₹${INR.monthly.toLocaleString("en-IN")} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} · FX ₹${INR_USD_RATE} per USD · tax included`
+          : `USD $${USD.monthly} / $${USD.yearly} / $${USD.lifetime} · INR ₹${INR.monthly.toLocaleString("en-IN")} / ₹${INR.yearly.toLocaleString("en-IN")} / ₹${INR.lifetime.toLocaleString("en-IN")} · FX ₹${INR_USD_RATE}/USD · tax shown below for USD`;
       }
     }
 
@@ -415,11 +415,11 @@
           } else if (paymentMode === "live") {
             banner.classList.add("ck-trust");
             banner.classList.remove("ck-practice");
-            banner.textContent = "Live checkout — real charges. Pro unlocks on your billing email.";
+            banner.textContent = "Live payments are on. You will be charged for real. Pro unlocks on the billing email you enter.";
           } else {
             banner.classList.add("ck-practice");
             banner.textContent =
-              "PayPal SANDBOX — use a Sandbox buyer from developer.paypal.com (Accounts). Your real PayPal login shows “session timed out / log in again” and never completes payment.";
+              "Test mode is on. Use a PayPal Sandbox buyer account, not your personal PayPal login.";
           }
         }
       } catch (_) {
@@ -438,10 +438,10 @@
       render();
       if (paymentMode !== "live") {
         setStatus(
-          "Opening PayPal Sandbox… Log in with a Sandbox buyer (not personal PayPal), then tap Pay Now. Login alone does not unlock Pro.",
+          "Opening PayPal test checkout. Use a Sandbox buyer account, then tap Pay Now to finish.",
         );
       } else {
-        setStatus(`Creating PayPal ${modeLabel()} order…`);
+        setStatus("Opening PayPal…");
       }
       try {
         const res = await fetch("/api/paypal/create-order", {
